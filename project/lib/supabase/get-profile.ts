@@ -1,7 +1,12 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+
+// @supabase/ssr가 반환하는 클라이언트의 정확한 타입을 그대로 재사용합니다.
+// (SupabaseClient<Database>를 직접 새로 선언하면 설치된 버전의 실제 제네릭
+//  구조와 미묘하게 어긋나 "not assignable" 에러가 날 수 있어, 이 방식이 더 안전합니다.)
+type TypedSupabaseClient = ReturnType<typeof createClient>;
 
 /**
  * 로그인한 사용자의 profiles 행을 가져옵니다.
@@ -11,7 +16,7 @@ export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
  * on type never")를 원천적으로 피합니다.
  */
 export async function getProfile(
-  supabase: SupabaseClient<Database>,
+  supabase: TypedSupabaseClient,
   userId: string
 ): Promise<Pick<ProfileRow, "role" | "name" | "phone" | "email" | "company_name" | "is_approved"> | null> {
   const { data } = await supabase
@@ -25,7 +30,7 @@ export async function getProfile(
 
 /** role만 필요한 관리자 권한 체크용 경량 버전 */
 export async function getProfileRole(
-  supabase: SupabaseClient<Database>,
+  supabase: TypedSupabaseClient,
   userId: string
 ): Promise<Pick<ProfileRow, "role"> | null> {
   const { data } = await supabase
