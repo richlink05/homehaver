@@ -2,6 +2,12 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminPageHeader } from "@/components/admin/AdminUI";
 import { RoleSelect } from "@/components/admin/RoleSelect";
 import { UserApprovalToggle } from "@/components/admin/UserApprovalToggle";
+import type { ProfileRow } from "@/lib/supabase/get-profile";
+
+type UserListRow = Pick<
+  ProfileRow,
+  "id" | "name" | "email" | "phone" | "role" | "company_name" | "is_approved" | "created_at"
+>;
 
 export default async function UsersPage({
   searchParams,
@@ -13,7 +19,8 @@ export default async function UsersPage({
   let query = supabase
     .from("profiles")
     .select("id, name, email, phone, role, company_name, is_approved, created_at")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .returns<UserListRow[]>();
 
   if (searchParams.q) {
     query = query.or(`name.ilike.%${searchParams.q}%,email.ilike.%${searchParams.q}%`);

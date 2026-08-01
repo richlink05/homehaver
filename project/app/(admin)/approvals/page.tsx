@@ -13,7 +13,18 @@ export default async function ApprovalsPage({
   let query = supabase
     .from("listings")
     .select("id, title, type, status, is_approved, created_at, profiles(company_name, name)")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .returns<
+      {
+        id: string;
+        title: string;
+        type: string;
+        status: string;
+        is_approved: boolean;
+        created_at: string;
+        profiles: { company_name: string | null; name: string | null } | null;
+      }[]
+    >();
 
   query = filter === "pending" ? query.eq("is_approved", false) : query.eq("is_approved", true);
 
@@ -41,7 +52,7 @@ export default async function ApprovalsPage({
             </tr>
           </thead>
           <tbody>
-            {(listings ?? []).map((l: any) => (
+            {(listings ?? []).map((l) => (
               <tr key={l.id} className="border-b border-line last:border-0 hover:bg-mist/30">
                 <td className="px-5 py-3.5 font-medium">{l.title}</td>
                 <td className="px-5 py-3.5 text-gray-600">{l.type}</td>

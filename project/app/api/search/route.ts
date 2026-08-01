@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -15,7 +16,13 @@ export async function GET(req: NextRequest) {
     .from("listings")
     .select("*, regions(sido, sigungu, dong), builders(name)", { count: "exact" })
     .eq("is_approved", true)
-    .range((page - 1) * pageSize, page * pageSize - 1);
+    .range((page - 1) * pageSize, page * pageSize - 1)
+    .returns<
+      (Database["public"]["Tables"]["listings"]["Row"] & {
+        regions: { sido: string; sigungu: string | null; dong: string | null } | null;
+        builders: { name: string } | null;
+      })[]
+    >();
 
   if (q) {
     query = query.or(`title.ilike.%${q}%,address.ilike.%${q}%`);

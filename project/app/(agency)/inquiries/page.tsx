@@ -23,7 +23,18 @@ export default async function AgencyInquiriesPage({
     .from("inquiries")
     .select("id, name, phone, message, status, created_at, listings!inner(id, title, agency_id)")
     .eq("listings.agency_id", user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .returns<
+      {
+        id: string;
+        name: string;
+        phone: string;
+        message: string | null;
+        status: "대기" | "응답완료";
+        created_at: string;
+        listings: { id: string; title: string; agency_id: string | null };
+      }[]
+    >();
 
   query = filter === "pending" ? query.neq("status", "응답완료") : query.eq("status", "응답완료");
 
