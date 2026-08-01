@@ -19,8 +19,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const { is_approved } = await req.json();
 
-  const { data, error } = await supabase
-    .from("listings")
+  // ⚠️ update() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+  const { data, error } = await (supabase.from("listings") as any)
     .update({ is_approved })
     .eq("id", params.id)
     .select()

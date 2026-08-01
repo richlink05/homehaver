@@ -113,7 +113,8 @@ export default function SignupPage() {
     // OTP로 생성된 계정에는 비밀번호가 없으므로 여기서 설정합니다.
     await supabase.auth.updateUser({ password: values.password });
 
-    await supabase.from("profiles").insert({
+    // ⚠️ insert() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+    await (supabase.from("profiles") as any).insert({
       id: user.id,
       role: "agency",
       name: values.name,

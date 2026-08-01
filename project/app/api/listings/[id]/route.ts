@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       "*, listing_images(*), listing_units(*), builders(name, brand_name), regions(sido, sigungu, dong)"
     )
     .eq("id", params.id)
-    .single();
+    .single<Record<string, any>>();
 
   if (error || !data) {
     return NextResponse.json({ data: null, error: "매물을 찾을 수 없습니다." }, { status: 404 });
@@ -31,8 +31,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ data: null, error: "로그인이 필요합니다." }, { status: 401 });
 
-  const { data, error } = await supabase
-    .from("listings")
+  // ⚠️ update() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+  const { data, error } = await (supabase.from("listings") as any)
     .update(body)
     .eq("id", params.id)
     .eq("agency_id", user.id)

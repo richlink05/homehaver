@@ -65,8 +65,8 @@ export default function NewListingPage() {
 
     // 매물은 관리자 승인 전까지 is_approved=false 로 생성됩니다.
     // 담당자 정보는 폼 값이 아닌 로그인 계정(profile)의 값을 그대로 사용해 임의 변경을 막습니다.
-    const { data: listing, error } = await supabase
-      .from("listings")
+    // ⚠️ insert()도 upsert()와 동일하게 이 프로젝트에서 입력값 타입 추론이 깨져 any로 우회합니다.
+    const listingResult = (await (supabase.from("listings") as any)
       .insert({
         agency_id: user.id,
         title: values.title,
@@ -83,7 +83,8 @@ export default function NewListingPage() {
         is_approved: false,
       })
       .select("id")
-      .single<{ id: string }>();
+      .single()) as { data: { id: string } | null; error: { message: string } | null };
+    const { data: listing, error } = listingResult;
 
     if (error || !listing) {
       setSubmitError("등록 중 오류가 발생했습니다. 다시 시도해주세요.");

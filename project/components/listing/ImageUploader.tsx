@@ -100,7 +100,8 @@ export async function uploadListingImages(listingId: string, files: UploadedFile
       data: { publicUrl },
     } = supabase.storage.from("listing-images").getPublicUrl(path);
 
-    await supabase.from("listing_images").insert({
+    // ⚠️ insert() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+    await (supabase.from("listing_images") as any).insert({
       listing_id: listingId,
       image_url: publicUrl,
       category: i === 0 ? "대표" : "평면도",

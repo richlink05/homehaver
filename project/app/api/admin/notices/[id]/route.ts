@@ -17,7 +17,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ data: null, error: "관리자 권한이 필요합니다." }, { status: 403 });
   }
   const body = await req.json();
-  const { data, error } = await supabase.from("admin_notices").update(body).eq("id", params.id).select().single();
+  // ⚠️ update() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+  const { data, error } = await (supabase.from("admin_notices") as any).update(body).eq("id", params.id).select().single();
   if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 });
   return NextResponse.json({ data, error: null });
 }

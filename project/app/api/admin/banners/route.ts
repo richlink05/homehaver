@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
   if (!admin) return NextResponse.json({ data: null, error: "관리자 권한이 필요합니다." }, { status: 403 });
 
   const body = await req.json();
-  const { data, error } = await supabase
-    .from("admin_banners")
+  // ⚠️ insert() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+  const { data, error } = await (supabase.from("admin_banners") as any)
     .insert({ ...body, created_by: admin.id })
     .select()
     .single();

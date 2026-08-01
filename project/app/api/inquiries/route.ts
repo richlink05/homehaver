@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data, error } = await supabase
-    .from("inquiries")
+  // ⚠️ insert() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+  const { data, error } = await (supabase.from("inquiries") as any)
     .insert({ listing_id, name, phone, message, user_id: user?.id ?? null })
     .select()
     .single();

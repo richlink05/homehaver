@@ -17,14 +17,15 @@ export async function POST(req: NextRequest) {
     .select("id")
     .eq("listing_id", listing_id)
     .eq("user_id", user.id)
-    .maybeSingle();
+    .maybeSingle<{ id: string }>();
 
   if (existing) {
-    await supabase.from("favorites").delete().eq("id", existing.id);
+    await (supabase.from("favorites") as any).delete().eq("id", existing.id);
     return NextResponse.json({ data: { favorited: false }, error: null });
   }
 
-  await supabase.from("favorites").insert({ listing_id, user_id: user.id });
+  // ⚠️ insert() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+  await (supabase.from("favorites") as any).insert({ listing_id, user_id: user.id });
   return NextResponse.json({ data: { favorited: true }, error: null });
 }
 

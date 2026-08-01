@@ -23,8 +23,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (role !== undefined) updatePayload.role = role;
   if (is_approved !== undefined) updatePayload.is_approved = is_approved;
 
-  const { data, error } = await supabase
-    .from("profiles")
+  // ⚠️ update() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+  const { data, error } = await (supabase.from("profiles") as any)
     .update(updatePayload)
     .eq("id", params.id)
     .select()
