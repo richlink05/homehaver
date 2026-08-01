@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient } from "@/lib/supabase/server";
 import { AdminPageHeader } from "@/components/admin/AdminUI";
 import { RoleSelect } from "@/components/admin/RoleSelect";
 import { UserApprovalToggle } from "@/components/admin/UserApprovalToggle";
