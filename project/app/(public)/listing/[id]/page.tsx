@@ -20,7 +20,8 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
   if (!listing) notFound();
 
-  await supabase.rpc("increment_view_count", { listing_id: params.id });
+  // ⚠️ rpc() 인자 타입 추론 문제 우회 (insert/update와 동일한 이유)
+  await (supabase.rpc as any)("increment_view_count", { listing_id: params.id });
 
   const address = [listing.regions?.sido, listing.regions?.sigungu, listing.regions?.dong]
     .filter(Boolean)

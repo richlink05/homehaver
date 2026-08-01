@@ -17,7 +17,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 
   // 조회수 증가 (비동기, 응답을 기다리지 않음)
-  supabase.rpc("increment_view_count", { listing_id: params.id }).then();
+  // ⚠️ rpc() 인자 타입 추론 문제 우회 (insert/update와 동일한 이유)
+  (supabase.rpc as any)("increment_view_count", { listing_id: params.id }).then();
 
   return NextResponse.json({ data, error: null });
 }
