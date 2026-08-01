@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ListingCard } from "@/components/listing/ListingCard";
 
@@ -15,16 +16,20 @@ export default async function MyPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect("/login");
+  }
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("name, role")
-    .eq("id", user?.id)
+    .eq("id", user.id)
     .single();
 
   const { data: favorites } = await supabase
     .from("favorites")
     .select("listings(*)")
-    .eq("user_id", user?.id)
+    .eq("user_id", user.id)
     .limit(9);
 
   return (

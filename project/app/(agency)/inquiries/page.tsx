@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { InquiryStatusToggle } from "@/components/agency/InquiryStatusToggle";
 
@@ -11,13 +12,17 @@ export default async function AgencyInquiriesPage({
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect("/login");
+  }
+
   const filter = searchParams.filter ?? "pending";
 
   // 내가 등록(담당)한 현장에 접수된 문의만 조회합니다.
   let query = supabase
     .from("inquiries")
     .select("id, name, phone, message, status, created_at, listings!inner(id, title, agency_id)")
-    .eq("listings.agency_id", user?.id)
+    .eq("listings.agency_id", user.id)
     .order("created_at", { ascending: false });
 
   query = filter === "pending" ? query.neq("status", "응답완료") : query.eq("status", "응답완료");

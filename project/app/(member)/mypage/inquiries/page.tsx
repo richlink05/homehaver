@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -11,10 +12,14 @@ export default async function MyInquiriesPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect("/login");
+  }
+
   const { data: inquiries } = await supabase
     .from("inquiries")
     .select("id, name, phone, message, status, created_at, listings(id, title)")
-    .eq("user_id", user?.id)
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   return (
