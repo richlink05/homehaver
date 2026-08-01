@@ -57,10 +57,11 @@ export default function NewListingPage() {
     // 깨지는 문제가 있어(onConflict 옵션과 결합 시 never[]로 오추론), 이 호출만
     // 타입 추론을 우회합니다. 실제 컬럼(name, brand_name)은 그대로 전달됩니다.
     const builderPayload = { name: values.builderName, brand_name: values.brandName };
-    const { data: builder } = await (supabase.from("builders") as any)
+    const builderResult = (await (supabase.from("builders") as any)
       .upsert(builderPayload, { onConflict: "name" })
       .select("id")
-      .single<{ id: string }>();
+      .single()) as { data: { id: string } | null };
+    const builder = builderResult.data;
 
     // 매물은 관리자 승인 전까지 is_approved=false 로 생성됩니다.
     // 담당자 정보는 폼 값이 아닌 로그인 계정(profile)의 값을 그대로 사용해 임의 변경을 막습니다.
