@@ -4,6 +4,8 @@
 //   npx supabase gen types typescript --project-id <project-id> > types/database.types.ts
 //
 // 지금은 마이그레이션(schema.sql) 기준으로 손으로 작성한 최소 타입입니다.
+// ⚠️ @supabase/supabase-js 2.45+ 는 각 테이블에 Relationships 필드가 있어야
+//    select()/eq() 등의 타입 추론이 정상 동작합니다 (없으면 Row가 never로 추론될 수 있음).
 
 export interface Database {
   public: {
@@ -21,6 +23,7 @@ export interface Database {
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> & { id: string };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
+        Relationships: [];
       };
       listings: {
         Row: {
@@ -48,6 +51,22 @@ export interface Database {
         };
         Insert: Partial<Database["public"]["Tables"]["listings"]["Row"]> & { title: string; type: string };
         Update: Partial<Database["public"]["Tables"]["listings"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "listings_agency_id_fkey";
+            columns: ["agency_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "listings_builder_id_fkey";
+            columns: ["builder_id"];
+            isOneToOne: false;
+            referencedRelation: "builders";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       listing_images: {
         Row: {
@@ -62,6 +81,15 @@ export interface Database {
           image_url: string;
         };
         Update: Partial<Database["public"]["Tables"]["listing_images"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "listing_images_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listings";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       inquiries: {
         Row: {
@@ -80,6 +108,22 @@ export interface Database {
           phone: string;
         };
         Update: Partial<Database["public"]["Tables"]["inquiries"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "inquiries_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       favorites: {
         Row: { id: string; listing_id: string; user_id: string; created_at: string };
@@ -88,11 +132,28 @@ export interface Database {
           user_id: string;
         };
         Update: Partial<Database["public"]["Tables"]["favorites"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "favorites_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "favorites_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       builders: {
         Row: { id: string; name: string; brand_name: string | null; logo_url: string | null };
         Insert: Partial<Database["public"]["Tables"]["builders"]["Row"]> & { name: string };
         Update: Partial<Database["public"]["Tables"]["builders"]["Row"]>;
+        Relationships: [];
       };
       admin_banners: {
         Row: {
@@ -105,6 +166,15 @@ export interface Database {
         };
         Insert: Partial<Database["public"]["Tables"]["admin_banners"]["Row"]> & { image_url: string };
         Update: Partial<Database["public"]["Tables"]["admin_banners"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "admin_banners_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       admin_notices: {
         Row: {
@@ -120,7 +190,28 @@ export interface Database {
           content: string;
         };
         Update: Partial<Database["public"]["Tables"]["admin_notices"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "admin_notices_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
       };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 }
