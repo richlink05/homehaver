@@ -13,9 +13,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     .from("inquiries")
     .select("id, listings(agency_id)")
     .eq("id", params.id)
-    .single();
+    .single<{ id: string; listings: { agency_id: string | null } | null }>();
 
-  const ownerId = (inquiry as any)?.listings?.agency_id;
+  const ownerId = inquiry?.listings?.agency_id;
   if (!inquiry || ownerId !== user.id) {
     return NextResponse.json({ data: null, error: "권한이 없습니다." }, { status: 403 });
   }

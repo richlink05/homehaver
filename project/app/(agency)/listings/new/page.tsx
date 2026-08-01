@@ -30,7 +30,11 @@ export default function NewListingPage() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data } = await supabase.from("profiles").select("name, phone").eq("id", user.id).single();
+      const { data } = await supabase
+        .from("profiles")
+        .select("name, phone")
+        .eq("id", user.id)
+        .single<{ name: string | null; phone: string | null }>();
       if (data) {
         setProfile({ name: data.name ?? "", phone: data.phone ?? "" });
         setValue("managerName", data.name ?? "");
@@ -53,7 +57,7 @@ export default function NewListingPage() {
       .from("builders")
       .upsert({ name: values.builderName, brand_name: values.brandName }, { onConflict: "name" })
       .select("id")
-      .single();
+      .single<{ id: string }>();
 
     // 매물은 관리자 승인 전까지 is_approved=false 로 생성됩니다.
     // 담당자 정보는 폼 값이 아닌 로그인 계정(profile)의 값을 그대로 사용해 임의 변경을 막습니다.
@@ -75,7 +79,7 @@ export default function NewListingPage() {
         is_approved: false,
       })
       .select("id")
-      .single();
+      .single<{ id: string }>();
 
     if (error || !listing) {
       setSubmitError("등록 중 오류가 발생했습니다. 다시 시도해주세요.");

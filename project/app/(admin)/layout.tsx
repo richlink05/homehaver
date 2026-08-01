@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/supabase/get-profile";
 
 const NAV = [
   { href: "/admin/approvals", label: "분양 승인" },
@@ -21,7 +22,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/login");
   }
 
-  const { data: profile } = await supabase.from("profiles").select("role, name").eq("id", user.id).single();
+  const profile = await getProfile(supabase, user.id);
 
   if (profile?.role !== "admin") {
     redirect("/login");

@@ -46,7 +46,7 @@ export default function LoginPage() {
       .from("profiles")
       .select("is_approved")
       .eq("id", data.user.id)
-      .single();
+      .single<{ is_approved: boolean }>();
 
     if (profile && profile.is_approved === false) {
       await supabase.auth.signOut();

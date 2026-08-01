@@ -24,7 +24,7 @@ export default async function MyPage() {
     .from("profiles")
     .select("name, role")
     .eq("id", user.id)
-    .single();
+    .single<{ name: string | null; role: "user" | "agency" | "admin" }>();
 
   const { data: favorites } = await supabase
     .from("favorites")

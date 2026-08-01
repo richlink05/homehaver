@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getProfileRole } from "@/lib/supabase/get-profile";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -11,7 +12,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ data: null, error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  const me = await getProfileRole(supabase, user.id);
 
   if (me?.role !== "admin") {
     return NextResponse.json({ data: null, error: "관리자 권한이 필요합니다." }, { status: 403 });
