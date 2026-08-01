@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>신규현장 — RichLink</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#C8A044; --gold-deep:#A8842E; --black:#111111; --white:#FFFFFF; --mist:#F5F5F5; --stone:#8A8580; --line:#E7E4DE;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Pretendard',-apple-system,sans-serif; color:var(--black); background:#fff; -webkit-font-smoothing:antialiased;}
+  a{text-decoration:none; color:inherit;} button{font-family:inherit; cursor:pointer; border:none; background:none;}
+
+  header{position:sticky; top:0; background:rgba(255,255,255,.94); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); z-index:10;}
+  .header-inner{max-width:1240px; margin:0 auto; padding:16px 32px; display:flex; align-items:center; justify-content:space-between;}
+  .logo{font-family:'Playfair Display',serif; font-weight:600; font-size:20px;}
+  .logo .link{color:var(--gold);}
+  .back{font-size:13px; color:#555;}
+  .back:hover{color:var(--gold-deep);}
+
+  .hero{max-width:1240px; margin:0 auto; padding:48px 32px 8px;}
+  .eyebrow{font-size:12px; letter-spacing:3px; color:var(--gold-deep); font-weight:600; margin-bottom:14px;}
+  h1{font-family:'Playfair Display',serif; font-size:28px; font-weight:600; margin-bottom:10px;}
+  .hero p{font-size:13.5px; color:#666;}
+
+  .wrap{max-width:1240px; margin:0 auto; padding:24px 32px 100px;}
+  .count-bar{font-size:13.5px; color:#444; margin-bottom:20px;}
+  .count-bar b{color:var(--black);}
+
+  .card-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:24px;}
+  @media (max-width:900px){ .card-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .card-grid{grid-template-columns:1fr;} }
+  .card{
+    border:1px solid var(--line); border-radius:6px; overflow:hidden; cursor:pointer; display:block;
+    transition:transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s ease, border-color .3s ease; background:var(--white);
+  }
+  .card:hover{transform:translateY(-6px); box-shadow:0 18px 40px rgba(17,17,17,.10); border-color:transparent;}
+  .card-thumb{height:200px; position:relative; overflow:hidden; background:linear-gradient(135deg,#EDE7D8,#D9CBA3);}
+  .badge{
+    position:absolute; top:12px; left:12px; background:var(--gold); color:#fff;
+    font-size:11px; padding:5px 10px; border-radius:999px; letter-spacing:.3px; font-weight:600;
+  }
+  .badge.new{left:auto; right:12px; background:var(--black);}
+  .card-body{padding:16px 16px 18px;}
+  .card-loc{font-size:12px; color:var(--stone); margin-bottom:6px;}
+  .card-title{font-size:16px; font-weight:600; margin-bottom:8px; line-height:1.4;}
+  .card-price{font-size:15px; color:var(--gold-deep); font-weight:700; margin-bottom:6px;}
+  .card-date{font-size:11.5px; color:var(--stone);}
+
+  .empty-state{grid-column:1/-1; text-align:center; padding:100px 20px; color:var(--stone); line-height:1.8;}
+  .empty-state p:first-child{font-size:15px; font-weight:600; color:var(--black); margin-bottom:6px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="prototype.html">Rich<span class="link">Link</span></a>
+    <a class="back" href="prototype.html">← 홈으로</a>
+  </div>
+</header>
+
+<div class="hero">
+  <p class="eyebrow">NEW LISTINGS</p>
+  <h1>신규현장</h1>
+  <p>최근 2개월 이내에 새로 등록된 분양 현장만 모아봤습니다.</p>
+</div>
+
+<div class="wrap">
+  <div class="count-bar">신규현장 <b id="newCount">0</b>건</div>
+  <div class="card-grid" id="cardGrid"></div>
+</div>
+
+<script>
+  const DEFAULT_LISTINGS = [
+    {id:"d1", title:"강남 리치타워 더 퍼스트", loc:"서울 강남구 역삼동", price:"12.8억 ~ 18.5억", type:"아파트", status:"분양중", approved:true, paid:true, thumbnail:null, createdAt:"2026-07-01"},
+    {id:"d2", title:"송도 리치오션뷰 센트럴", loc:"인천 연수구 송도동", price:"6.2억 ~ 9.4억", type:"오피스텔", status:"분양예정", approved:true, paid:true, thumbnail:null, createdAt:"2026-02-15"},
+    {id:"d3", title:"용인 리치파크 스카이", loc:"경기 용인시 수지구", price:"5.5억 ~ 8.1억", type:"아파트", status:"분양중", approved:true, paid:true, thumbnail:null, createdAt:"2026-06-25"},
+    {id:"d4", title:"수원 리치스퀘어 지식산업센터", loc:"경기 수원시 영통구", price:"3.1억 ~ 5.9억", type:"지식산업센터", status:"분양중", approved:true, paid:true, thumbnail:null, createdAt:"2026-01-20"},
+    {id:"d5", title:"동탄 리치스트리트 상가", loc:"경기 화성시 동탄", price:"2.4억 ~ 4.7억", type:"상가", status:"분양중", approved:true, paid:true, thumbnail:null, createdAt:"2026-07-10"},
+    {id:"d6", title:"부산 리치마린 더뷰", loc:"부산 해운대구 우동", price:"7.8억 ~ 11.3억", type:"아파트", status:"분양예정", approved:true, paid:true, thumbnail:null, createdAt:"2026-03-05"},
+  ];
+
+  function loadCustomListings(){
+    try{ return JSON.parse(localStorage.getItem('richlink_custom_listings') || '[]'); }catch(e){ return []; }
+  }
+
+  const allListings = [...loadCustomListings(), ...DEFAULT_LISTINGS];
+
+  function daysAgo(dateStr){
+    if(!dateStr) return Infinity;
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    return diffMs / (1000 * 60 * 60 * 24);
+  }
+
+  function renderNewListings(){
+    const newOnes = allListings
+      .filter(l => l.approved !== false && daysAgo(l.createdAt) <= 60)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    document.getElementById('newCount').textContent = newOnes.length;
+
+    const grid = document.getElementById('cardGrid');
+    if(newOnes.length === 0){
+      grid.innerHTML = `
+        <div class="empty-state">
+          <p>최근 2개월 내 등록된 신규현장이 없습니다</p>
+          <p style="font-size:13px;">새로운 현장이 등록되면 이곳에 표시됩니다.</p>
+        </div>
+      `;
+      return;
+    }
+
+    grid.innerHTML = newOnes.map(l => `
+      <a class="card" href="prototype.html#/listing/${encodeURIComponent(l.id)}">
+        <div class="card-thumb" style="${l.thumbnail ? `background-image:url('${l.thumbnail}');background-size:cover;background-position:center;` : ''}">
+          <span class="badge">${l.status}</span>
+          <span class="badge new">NEW</span>
+        </div>
+        <div class="card-body">
+          <div class="card-loc">${l.loc}</div>
+          <div class="card-title">${l.title}</div>
+          <div class="card-price">${l.price}</div>
+          <div class="card-date">${l.createdAt ? l.createdAt + ' 등록' : ''}</div>
+        </div>
+      </a>
+    `).join('');
+  }
+
+  renderNewListings();
+</script>
+
+</body>
+</html>

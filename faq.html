@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자주 묻는 질문 — RichLink</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700&display=swap" rel="stylesheet">
+<style>
+  :root{ --gold:#C8A044; --gold-deep:#A8842E; --black:#111111; --mist:#F5F5F5; --stone:#8A8580; --line:#E7E4DE; }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Pretendard',-apple-system,sans-serif; color:var(--black); background:#fff; -webkit-font-smoothing:antialiased;}
+  a{text-decoration:none; color:inherit;}
+  header{position:sticky; top:0; background:rgba(255,255,255,.94); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); z-index:10;}
+  .header-inner{max-width:900px; margin:0 auto; padding:16px 24px; display:flex; align-items:center; justify-content:space-between;}
+  .logo{font-family:'Playfair Display',serif; font-weight:600; font-size:20px;}
+  .logo .link{color:var(--gold);}
+  .back{font-size:13px; color:#555;}
+  .back:hover{color:var(--gold-deep);}
+
+  .hero{max-width:900px; margin:0 auto; padding:56px 24px 20px; text-align:center;}
+  .eyebrow{font-size:12px; letter-spacing:3px; color:var(--gold-deep); font-weight:600; margin-bottom:14px;}
+  h1{font-family:'Playfair Display',serif; font-size:30px; font-weight:600; margin-bottom:12px;}
+  .hero p{font-size:14px; color:#666; line-height:1.7;}
+
+  .wrap{max-width:760px; margin:0 auto; padding:24px 24px 100px;}
+  .category{font-size:12px; font-weight:700; color:var(--gold-deep); letter-spacing:.5px; margin:36px 0 14px;}
+  .category:first-child{margin-top:0;}
+
+  .faq-item{border-bottom:1px solid var(--line);}
+  .faq-q{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 4px; cursor:pointer;
+    font-size:14.5px; font-weight:600;
+  }
+  .faq-q .mark{color:var(--gold); font-size:15px; flex-shrink:0; transition:transform .25s ease;}
+  .faq-item.open .faq-q .mark{transform:rotate(45deg);}
+  .faq-a{
+    max-height:0; overflow:hidden; transition:max-height .3s ease;
+    font-size:13.5px; line-height:1.85; color:#555;
+  }
+  .faq-item.open .faq-a{max-height:400px;}
+  .faq-a-inner{padding:0 4px 20px;}
+
+  .cta{
+    margin-top:56px; padding:32px; background:var(--mist); border-radius:12px; text-align:center;
+  }
+  .cta p{font-size:13.5px; color:#555; margin-bottom:16px;}
+  .cta a{
+    display:inline-block; background:var(--gold); color:#fff; padding:12px 28px; border-radius:6px; font-size:13.5px; font-weight:600;
+  }
+  .cta a:hover{background:var(--gold-deep);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="prototype.html">Rich<span class="link">Link</span></a>
+    <a class="back" href="prototype.html">← 홈으로</a>
+  </div>
+</header>
+
+<div class="hero">
+  <p class="eyebrow">FAQ</p>
+  <h1>자주 묻는 질문</h1>
+  <p>집을 살 때, 특히 분양을 받을 때 반드시 확인해야 할 부분들을 정리했습니다.</p>
+</div>
+
+<div class="wrap">
+
+  <p class="category">계약 전 확인사항</p>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)"><span>분양 계약 전 반드시 확인해야 할 서류는 무엇인가요?</span><span class="mark">+</span></div>
+    <div class="faq-a"><div class="faq-a-inner">시행사·시공사의 사업자등록증, 해당 사업지의 <b>입주자모집공고문</b>, 대지 및 건축물의 등기부등본(신탁 여부 확인), 그리고 분양보증서(주택도시보증공사 HUG 등) 발급 여부를 반드시 확인해야 합니다. 특히 신탁 등기가 되어 있다면 시행사가 아닌 신탁사와의 관계도 함께 확인하세요.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)"><span>분양가와 실제 부담해야 할 금액이 다를 수 있나요?</span><span class="mark">+</span></div>
+    <div class="faq-a"><div class="faq-a-inner">네. 발코니 확장비, 시스템 에어컨 등 유상옵션, 중도금 대출 이자(후불제 여부), 취득세 등은 별도로 계산해야 합니다. 광고에 표시된 "분양가"만 보지 말고 총 부담금(옵션+세금+이자)을 기준으로 예산을 세우는 것이 안전합니다.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)"><span>시행사와 시공사의 차이를 알아야 하는 이유가 있나요?</span><span class="mark">+</span></div>
+    <div class="faq-a"><div class="faq-a-inner">시행사는 사업 전체를 기획·운영하는 주체이고, 시공사는 실제 건물을 짓는 건설사입니다. 브랜드가 유명한 시공사가 참여해도 시행사의 재무 상태가 부실하면 사업 지연·중단 위험이 있으므로, 두 주체를 각각 따로 확인해야 합니다.</div></div>
+  </div>
+
+  <p class="category">대금 납부 및 자금 계획</p>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)"><span>중도금 대출은 어떻게 진행되나요?</span><span class="mark">+</span></div>
+    <div class="faq-a"><div class="faq-a-inner">보통 계약금 10~20%를 낸 후 중도금(통상 60%)을 집단대출로 납부하고, 입주 시 잔금(나머지)을 치르는 구조입니다. 중도금 대출은 개인 신용과 별개로 사업장 단위로 은행이 정해지는 경우가 많으니, 본인이 기존 대출이 많다면 사전에 은행에 대출 가능 여부를 확인해야 합니다.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)"><span>계약금을 낸 후 계약을 해지하면 전액 돌려받을 수 있나요?</span><span class="mark">+</span></div>
+    <div class="faq-a"><div class="faq-a-inner">일반적으로 청약철회 기간(계약일로부터 통상 7~15일, 사업장마다 상이)이 지나면 계약금은 위약금으로 처리되어 반환이 어렵습니다. 계약서의 해지·위약 조항을 계약 전에 꼼꼼히 확인하세요.</div></div>
+  </div>
+
+  <p class="category">입주 및 하자</p>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)"><span>입주 전 사전점검에서 무엇을 확인해야 하나요?</span><span class="mark">+</span></div>
+    <div class="faq-a"><div class="faq-a-inner">벽지·바닥 마감, 창호 및 문 개폐, 배수·누수, 콘센트·조명 작동 여부 등을 육안과 간단한 도구로 점검합니다. 하자가 발견되면 반드시 사진과 함께 하자보수 신청서를 작성해 접수해야 추후 무상 보수를 받을 수 있습니다.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)"><span>입주 후 하자보수는 언제까지 요청할 수 있나요?</span><span class="mark">+</span></div>
+    <div class="faq-a"><div class="faq-a-inner">공동주택관리법상 하자담보책임기간은 부위별로 상이합니다(마감공사 2년, 방수공사 5년, 구조내력 등 10년). 기간 내 발견된 하자는 사업주체(시행사)에 서면으로 보수를 요청할 수 있습니다.</div></div>
+  </div>
+
+  <p class="category">RichLink 이용 관련</p>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)"><span>RichLink에 등록된 분양 정보는 검증된 정보인가요?</span><span class="mark">+</span></div>
+    <div class="faq-a"><div class="faq-a-inner">현장 등록은 담당자 회원가입(이메일 인증) 및 관리자 승인을 거쳐 게시되지만, 분양 정보의 세부 내용은 각 현장 담당자가 직접 입력합니다. 계약 전에는 반드시 담당자를 통해 공식 서류(입주자모집공고 등)를 다시 한번 확인하시길 권장합니다.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)"><span>상담을 신청하면 언제 연락을 받을 수 있나요?</span><span class="mark">+</span></div>
+    <div class="faq-a"><div class="faq-a-inner">상담신청은 해당 현장의 담당자에게 즉시 전달되며, 담당자가 문의관리 화면에서 확인 후 순차적으로 연락드립니다. 빠른 상담이 필요하시면 현장 상세페이지의 담당자 연락처로 직접 전화 문의도 가능합니다.</div></div>
+  </div>
+
+  <div class="cta">
+    <p>더 궁금한 점이 있으신가요? 원하는 현장의 담당자에게 직접 문의해보세요.</p>
+    <a href="prototype.html">현장 둘러보기</a>
+  </div>
+</div>
+
+<script>
+  function toggleFaq(el){
+    const item = el.parentElement;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+    if(!wasOpen) item.classList.add('open');
+  }
+</script>
+
+</body>
+</html>

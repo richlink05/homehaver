@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>지도현장 — RichLink</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<style>
+  :root{
+    --gold: #C8A044; --gold-deep: #A8842E; --gold-soft: #E7D6AC;
+    --black: #111111; --white: #FFFFFF; --mist: #F5F5F5; --stone: #8A8580; --line: #E7E4DE;
+    --serif: 'Playfair Display', 'Noto Serif KR', serif;
+    --sans: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{font-family:var(--sans); color:var(--black); background:var(--white); -webkit-font-smoothing:antialiased;}
+  a{text-decoration:none; color:inherit;}
+  button{font-family:inherit; cursor:pointer; border:none; background:none;}
+
+  header{
+    position:sticky; top:0; z-index:1000; background:rgba(255,255,255,.94); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .header-inner{
+    max-width:1240px; margin:0 auto; padding:16px 32px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  .logo{font-family:var(--serif); font-weight:600; font-size:22px; letter-spacing:.5px; display:flex; align-items:baseline; gap:2px;}
+  .logo .rich{color:var(--black);}
+  .logo .link{color:var(--gold);}
+  .header-right{display:flex; align-items:center; gap:14px;}
+  .results-back{font-size:13px; color:#555; transition:color .2s ease;}
+  .results-back:hover{color:var(--gold-deep);}
+
+  .page-title-bar{
+    max-width:1240px; margin:0 auto; padding:22px 32px 0; display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:10px;
+  }
+  .page-title-bar h1{font-family:var(--serif); font-size:22px; font-weight:600;}
+  .page-title-bar p{font-size:13px; color:var(--stone);}
+
+  .map-layout{max-width:1240px; margin:0 auto; padding:18px 32px 40px; display:grid; grid-template-columns:1fr 340px; gap:24px;}
+  @media (max-width:900px){ .map-layout{grid-template-columns:1fr;} }
+
+  #map{
+    height:640px; border-radius:10px; border:1px solid var(--line); overflow:hidden;
+    box-shadow:0 8px 28px rgba(17,17,17,0.06);
+  }
+  @media (max-width:900px){ #map{height:420px;} }
+
+  .side-list{border:1px solid var(--line); border-radius:10px; overflow:hidden; max-height:640px; display:flex; flex-direction:column;}
+  .side-list-head{padding:16px 18px; border-bottom:1px solid var(--line); font-size:13px; font-weight:600; background:var(--mist);}
+  .side-list-body{overflow-y:auto; flex:1;}
+  .side-item{
+    display:flex; gap:12px; padding:14px 18px; border-bottom:1px solid var(--line); cursor:pointer; transition:background .15s ease;
+  }
+  .side-item:hover{background:#FBF9F4;}
+  .side-item:last-child{border-bottom:none;}
+  .side-thumb{
+    width:56px; height:44px; border-radius:5px; flex-shrink:0; background:linear-gradient(135deg,#EDE7D8,#D9CBA3); background-size:cover; background-position:center;
+  }
+  .side-info .loc{font-size:11px; color:var(--stone); margin-bottom:2px;}
+  .side-info .title{font-size:13px; font-weight:600; line-height:1.35; margin-bottom:3px;}
+  .side-info .price{font-size:12px; color:var(--gold-deep); font-weight:700;}
+
+  /* Leaflet 팝업 커스텀 */
+  .leaflet-popup-content-wrapper{border-radius:8px; padding:0; overflow:hidden;}
+  .leaflet-popup-content{margin:0; width:220px !important;}
+  .popup-thumb{height:100px; background:linear-gradient(135deg,#EDE7D8,#D9CBA3); background-size:cover; background-position:center; position:relative;}
+  .popup-badge{position:absolute; top:8px; left:8px; background:var(--gold); color:#fff; font-size:10.5px; padding:3px 8px; border-radius:999px; font-weight:600;}
+  .popup-body{padding:10px 12px 12px;}
+  .popup-loc{font-size:11px; color:var(--stone); margin-bottom:3px;}
+  .popup-title{font-size:13px; font-weight:700; line-height:1.35; margin-bottom:5px;}
+  .popup-price{font-size:12.5px; color:var(--gold-deep); font-weight:700; margin-bottom:8px;}
+  .popup-link{
+    display:block; text-align:center; background:var(--black); color:#fff; font-size:12px; padding:7px; border-radius:5px; font-weight:600;
+  }
+
+  .gold-pin{
+    width:30px; height:30px; border-radius:50% 50% 50% 0; background:var(--gold); transform:rotate(-45deg);
+    border:2px solid #fff; box-shadow:0 3px 8px rgba(17,17,17,.3); display:flex; align-items:center; justify-content:center;
+  }
+  .gold-pin span{transform:rotate(45deg); color:#fff; font-size:12px; font-weight:800;}
+
+  .empty-state{padding:60px 20px; text-align:center; color:var(--stone); font-size:13px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="prototype.html"><span class="rich">Rich</span><span class="link">Link</span></a>
+    <div class="header-right">
+      <a class="results-back" href="prototype.html">← 홈으로</a>
+    </div>
+  </div>
+</header>
+
+<div class="page-title-bar">
+  <div>
+    <h1>지도현장</h1>
+    <p style="margin-top:4px;">등록된 모든 분양 현장을 지도에서 한눈에 확인하세요.</p>
+  </div>
+  <p id="totalCountLabel" style="font-size:13px; color:#444;">총 <b id="totalCount">0</b>건</p>
+</div>
+
+<div class="map-layout">
+  <div id="map"></div>
+
+  <aside class="side-list">
+    <div class="side-list-head">전체 현장 목록</div>
+    <div class="side-list-body" id="sideList"></div>
+  </aside>
+</div>
+
+<script>
+  const DEFAULT_LISTINGS = [
+    {id:"d1", title:"강남 리치타워 더 퍼스트", loc:"서울 강남구 역삼동", price:"12.8억 ~ 18.5억", type:"아파트", status:"분양중", approved:true, paid:true, thumbnail:null, lat:37.5006, lng:127.0364},
+    {id:"d2", title:"송도 리치오션뷰 센트럴", loc:"인천 연수구 송도동", price:"6.2억 ~ 9.4억", type:"오피스텔", status:"분양예정", approved:true, paid:true, thumbnail:null, lat:37.3894, lng:126.6402},
+    {id:"d3", title:"용인 리치파크 스카이", loc:"경기 용인시 수지구", price:"5.5억 ~ 8.1억", type:"아파트", status:"분양중", approved:true, paid:true, thumbnail:null, lat:37.3223, lng:127.0980},
+    {id:"d4", title:"수원 리치스퀘어 지식산업센터", loc:"경기 수원시 영통구", price:"3.1억 ~ 5.9억", type:"지식산업센터", status:"분양중", approved:true, paid:true, thumbnail:null, lat:37.2636, lng:127.0455},
+    {id:"d5", title:"동탄 리치스트리트 상가", loc:"경기 화성시 동탄", price:"2.4억 ~ 4.7억", type:"상가", status:"분양중", approved:true, paid:true, thumbnail:null, lat:37.2004, lng:127.0731},
+    {id:"d6", title:"부산 리치마린 더뷰", loc:"부산 해운대구 우동", price:"7.8억 ~ 11.3억", type:"아파트", status:"분양예정", approved:true, paid:true, thumbnail:null, lat:35.1631, lng:129.1635},
+  ];
+
+  // 주소 텍스트에 포함된 지명으로 대략적인 좌표를 추정합니다. (실제 서비스에서는 등록 시 지오코딩 API로 정확한 좌표를 저장합니다)
+  const REGION_COORDS = [
+    { key:'해운대', lat:35.1631, lng:129.1635 }, { key:'부산', lat:35.1796, lng:129.0756 },
+    { key:'송도', lat:37.3894, lng:126.6402 }, { key:'인천', lat:37.4563, lng:126.7052 },
+    { key:'동탄', lat:37.2004, lng:127.0731 },
+    { key:'수원', lat:37.2636, lng:127.0455 },
+    { key:'용인', lat:37.3223, lng:127.0980 },
+    { key:'강남', lat:37.5006, lng:127.0364 },
+    { key:'서초', lat:37.4837, lng:127.0324 },
+    { key:'송파', lat:37.5145, lng:127.1059 },
+    { key:'마포', lat:37.5663, lng:126.9019 },
+    { key:'용산', lat:37.5326, lng:126.9905 },
+    { key:'세종', lat:36.4801, lng:127.2891 },
+    { key:'대구', lat:35.8714, lng:128.6014 },
+    { key:'광주', lat:35.1595, lng:126.8526 },
+    { key:'대전', lat:36.3504, lng:127.3845 },
+    { key:'서울', lat:37.5665, lng:126.9780 },
+  ];
+
+  function estimateCoords(loc){
+    for(const r of REGION_COORDS){
+      if(loc.includes(r.key)) return { lat: r.lat + (Math.random()-0.5)*0.01, lng: r.lng + (Math.random()-0.5)*0.01 };
+    }
+    // 매칭되는 지명이 없으면 서울시청 부근에 임의 배치
+    return { lat: 37.5665 + (Math.random()-0.5)*0.05, lng: 126.9780 + (Math.random()-0.5)*0.05 };
+  }
+
+  function loadCustomListings(){
+    try{ return JSON.parse(localStorage.getItem('richlink_custom_listings') || '[]'); }catch(e){ return []; }
+  }
+
+  const customListings = loadCustomListings().map(l => ({
+    ...l,
+    lat: l.lat || estimateCoords(l.loc || '').lat,
+    lng: l.lng || estimateCoords(l.loc || '').lng,
+  }));
+
+  const allListings = [...customListings, ...DEFAULT_LISTINGS].filter(l => l.approved !== false);
+
+  document.getElementById('totalCount').textContent = allListings.length;
+
+  // ---- 지도 초기화 ----
+  const map = L.map('map', { scrollWheelZoom: true }).setView([36.6, 127.5], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19,
+  }).addTo(map);
+
+  function goldIcon(){
+    return L.divIcon({
+      className: '',
+      html: '<div class="gold-pin"><span>R</span></div>',
+      iconSize: [30,30],
+      iconAnchor: [15,28],
+      popupAnchor: [0,-26],
+    });
+  }
+
+  const markers = {};
+  const bounds = [];
+
+  if(allListings.length === 0){
+    document.getElementById('sideList').innerHTML = '<div class="empty-state">등록된 현장이 없습니다.</div>';
+  } else {
+    allListings.forEach(l => {
+      const marker = L.marker([l.lat, l.lng], { icon: goldIcon() }).addTo(map);
+      const thumbStyle = l.thumbnail ? `background-image:url('${l.thumbnail}');background-size:cover;background-position:center;` : '';
+      marker.bindPopup(`
+        <div class="popup-thumb" style="${thumbStyle}"><span class="popup-badge">${l.status}</span></div>
+        <div class="popup-body">
+          <div class="popup-loc">${l.loc}</div>
+          <div class="popup-title">${l.title}</div>
+          <div class="popup-price">${l.price}</div>
+          <a class="popup-link" href="prototype.html#/listing/${encodeURIComponent(l.id)}">상세보기</a>
+        </div>
+      `);
+      markers[l.id] = marker;
+      bounds.push([l.lat, l.lng]);
+    });
+    if(bounds.length > 0) map.fitBounds(bounds, { padding: [40,40], maxZoom: 12 });
+
+    document.getElementById('sideList').innerHTML = allListings.map(l => `
+      <div class="side-item" onclick="focusListing('${l.id}')">
+        <div class="side-thumb" style="${l.thumbnail ? `background-image:url('${l.thumbnail}')` : ''}"></div>
+        <div class="side-info">
+          <div class="loc">${l.loc}</div>
+          <div class="title">${l.title}</div>
+          <div class="price">${l.price}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function focusListing(id){
+    const marker = markers[id];
+    if(!marker) return;
+    map.setView(marker.getLatLng(), 14, { animate: true });
+    marker.openPopup();
+  }
+</script>
+
+</body>
+</html>
