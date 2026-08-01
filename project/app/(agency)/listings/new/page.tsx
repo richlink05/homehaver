@@ -53,9 +53,12 @@ export default function NewListingPage() {
       return;
     }
 
-    const { data: builder } = await supabase
-      .from("builders")
-      .upsert({ name: values.builderName, brand_name: values.brandName }, { onConflict: "name" })
+    // ⚠️ upsert()는 이 프로젝트의 postgrest-js 버전에서 입력값 타입 추론이 계속
+    // 깨지는 문제가 있어(onConflict 옵션과 결합 시 never[]로 오추론), 이 호출만
+    // 타입 추론을 우회합니다. 실제 컬럼(name, brand_name)은 그대로 전달됩니다.
+    const builderPayload = { name: values.builderName, brand_name: values.brandName };
+    const { data: builder } = await (supabase.from("builders") as any)
+      .upsert(builderPayload, { onConflict: "name" })
       .select("id")
       .single<{ id: string }>();
 
