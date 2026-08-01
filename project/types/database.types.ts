@@ -315,7 +315,10 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      increment_view_count: {
+        Args: { listing_id: string };
+        Returns: void;
+      };
     };
     Enums: {
       [_ in never]: never;
