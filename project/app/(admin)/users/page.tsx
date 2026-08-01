@@ -19,8 +19,7 @@ export default async function UsersPage({
   let query = supabase
     .from("profiles")
     .select("id, name, email, phone, role, company_name, is_approved, created_at")
-    .order("created_at", { ascending: false })
-    .returns<UserListRow[]>();
+    .order("created_at", { ascending: false });
 
   if (searchParams.q) {
     query = query.or(`name.ilike.%${searchParams.q}%,email.ilike.%${searchParams.q}%`);
@@ -28,7 +27,7 @@ export default async function UsersPage({
   if (searchParams.filter === "pending") query = query.eq("is_approved", false);
   if (searchParams.filter === "approved") query = query.eq("is_approved", true);
 
-  const { data: users } = await query;
+  const { data: users } = await query.returns<UserListRow[]>();
 
   return (
     <div>

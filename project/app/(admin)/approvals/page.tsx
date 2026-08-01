@@ -10,25 +10,24 @@ export default async function ApprovalsPage({
   const supabase = createClient();
   const filter = searchParams.filter ?? "pending";
 
+  type ApprovalListingRow = {
+    id: string;
+    title: string;
+    type: string;
+    status: string;
+    is_approved: boolean;
+    created_at: string;
+    profiles: { company_name: string | null; name: string | null } | null;
+  };
+
   let query = supabase
     .from("listings")
     .select("id, title, type, status, is_approved, created_at, profiles(company_name, name)")
-    .order("created_at", { ascending: false })
-    .returns<
-      {
-        id: string;
-        title: string;
-        type: string;
-        status: string;
-        is_approved: boolean;
-        created_at: string;
-        profiles: { company_name: string | null; name: string | null } | null;
-      }[]
-    >();
+    .order("created_at", { ascending: false });
 
   query = filter === "pending" ? query.eq("is_approved", false) : query.eq("is_approved", true);
 
-  const { data: listings } = await query;
+  const { data: listings } = await query.returns<ApprovalListingRow[]>();
 
   return (
     <div>

@@ -18,27 +18,26 @@ export default async function AgencyInquiriesPage({
 
   const filter = searchParams.filter ?? "pending";
 
+  type AgencyInquiryRow = {
+    id: string;
+    name: string;
+    phone: string;
+    message: string | null;
+    status: "대기" | "응답완료";
+    created_at: string;
+    listings: { id: string; title: string; agency_id: string | null };
+  };
+
   // 내가 등록(담당)한 현장에 접수된 문의만 조회합니다.
   let query = supabase
     .from("inquiries")
     .select("id, name, phone, message, status, created_at, listings!inner(id, title, agency_id)")
     .eq("listings.agency_id", user.id)
-    .order("created_at", { ascending: false })
-    .returns<
-      {
-        id: string;
-        name: string;
-        phone: string;
-        message: string | null;
-        status: "대기" | "응답완료";
-        created_at: string;
-        listings: { id: string; title: string; agency_id: string | null };
-      }[]
-    >();
+    .order("created_at", { ascending: false });
 
   query = filter === "pending" ? query.neq("status", "응답완료") : query.eq("status", "응답완료");
 
-  const { data: inquiries } = await query;
+  const { data: inquiries } = await query.returns<AgencyInquiryRow[]>();
 
   return (
     <section className="mx-auto max-w-[1100px] px-8 py-12">
