@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { SearchBar } from "@/components/search/SearchBar";
 import { ListingFilter } from "@/components/listing/ListingFilter";
@@ -58,14 +59,18 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       </div>
 
       <div className="mx-auto grid max-w-[1240px] grid-cols-[240px_1fr] gap-10 px-8 py-8 max-[860px]:grid-cols-1">
-        <ListingFilter />
+        <Suspense fallback={null}>
+          <ListingFilter />
+        </Suspense>
 
         <div>
           <div className="mb-5 flex items-center justify-between">
             <p className="text-sm text-gray-600">
               검색결과 <b className="text-ink">{count ?? 0}</b>건
             </p>
-            <SortSelect />
+            <Suspense fallback={null}>
+              <SortSelect />
+            </Suspense>
           </div>
           <ListingGrid listings={(listings as any) ?? []} />
         </div>
