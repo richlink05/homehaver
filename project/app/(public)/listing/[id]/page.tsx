@@ -16,7 +16,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
       "*, listing_images(*), listing_units(*), builders(name, brand_name), regions(sido, sigungu, dong)"
     )
     .eq("id", params.id)
-    .single();
+    .single<Record<string, any>>();
 
   if (!listing) notFound();
 
