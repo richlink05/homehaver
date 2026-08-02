@@ -26,7 +26,7 @@ create table regions (
 
 create table builders (
   id uuid primary key default uuid_generate_v4(),
-  name text not null,
+  name text not null unique,
   brand_name text,
   logo_url text
 );
@@ -42,6 +42,11 @@ create table listings (
   status text not null default '분양예정' check (status in ('분양예정','분양중','계약중','마감')),
   price_min numeric,
   price_max numeric,
+  area_min numeric,
+  area_max numeric,
+  unit_count int,
+  building_count int,
+  top_floor int,
   move_in_date date,
   address text,
   lat numeric,

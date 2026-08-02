@@ -57,6 +57,11 @@ export interface Database {
           status: "분양예정" | "분양중" | "계약중" | "마감";
           price_min: number | null;
           price_max: number | null;
+          area_min: number | null;
+          area_max: number | null;
+          unit_count: number | null;
+          building_count: number | null;
+          top_floor: number | null;
           move_in_date: string | null;
           address: string | null;
           lat: number | null;
@@ -80,6 +85,11 @@ export interface Database {
           status?: string;
           price_min?: number | null;
           price_max?: number | null;
+          area_min?: number | null;
+          area_max?: number | null;
+          unit_count?: number | null;
+          building_count?: number | null;
+          top_floor?: number | null;
           move_in_date?: string | null;
           address?: string | null;
           lat?: number | null;
@@ -103,6 +113,11 @@ export interface Database {
           status?: string;
           price_min?: number | null;
           price_max?: number | null;
+          area_min?: number | null;
+          area_max?: number | null;
+          unit_count?: number | null;
+          building_count?: number | null;
+          top_floor?: number | null;
           move_in_date?: string | null;
           address?: string | null;
           lat?: number | null;
