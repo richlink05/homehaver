@@ -60,7 +60,9 @@ export default function SignupPage() {
     setSending(false);
 
     if (error) {
-      setEmailError("인증코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      // 실제 원인을 바로 확인할 수 있도록 Supabase가 반환한 에러 메시지를 그대로 보여줍니다.
+      console.error("signInWithOtp error:", error);
+      setEmailError(`인증코드 발송에 실패했습니다: ${error.message}`);
       return;
     }
     setStep("code");
