@@ -44,9 +44,9 @@ function LoginForm() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("is_approved")
+      .select("is_approved, role")
       .eq("id", data.user.id)
-      .single<{ is_approved: boolean }>();
+      .single<{ is_approved: boolean; role: "user" | "agency" | "admin" }>();
 
     // 프로필 row가 없거나 조회에 실패한 경우도 "미승인"과 동일하게 차단합니다.
     // (승인 여부를 확인할 수 없으면 통과시키지 않는 것이 안전합니다.)
@@ -58,7 +58,7 @@ function LoginForm() {
     }
 
     setLoading(false);
-    router.push("/mypage");
+    router.push(profile.role === "admin" ? "/admin/approvals" : "/mypage");
   };
 
   const handleResend = async () => {
