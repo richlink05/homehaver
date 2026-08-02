@@ -48,7 +48,9 @@ function LoginForm() {
       .eq("id", data.user.id)
       .single<{ is_approved: boolean }>();
 
-    if (profile && profile.is_approved === false) {
+    // 프로필 row가 없거나 조회에 실패한 경우도 "미승인"과 동일하게 차단합니다.
+    // (승인 여부를 확인할 수 없으면 통과시키지 않는 것이 안전합니다.)
+    if (profile?.is_approved !== true) {
       await supabase.auth.signOut();
       setLoading(false);
       setError("관리자 승인 대기 중인 계정입니다. 승인 완료 후 로그인해주세요.");

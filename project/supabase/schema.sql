@@ -156,7 +156,13 @@ create policy "listings_agency_insert" on listings
 create policy "listings_agency_update" on listings
   for update using (auth.uid() = agency_id);
 
--- 본인 프로필만 수정
+-- 본인 프로필 생성(회원가입 시 1회) / 조회 / 수정
+create policy "profiles_self_insert" on profiles
+  for insert with check (auth.uid() = id);
+
+create policy "profiles_self_select" on profiles
+  for select using (auth.uid() = id);
+
 create policy "profiles_self_update" on profiles
   for update using (auth.uid() = id);
 

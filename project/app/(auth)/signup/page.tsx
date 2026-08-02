@@ -116,7 +116,7 @@ export default function SignupPage() {
     await supabase.auth.updateUser({ password: values.password });
 
     // ⚠️ insert() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
-    await (supabase.from("profiles") as any).insert({
+    const { error: profileError } = await (supabase.from("profiles") as any).insert({
       id: user.id,
       role: "agency",
       name: values.name,
@@ -125,6 +125,13 @@ export default function SignupPage() {
       company_name: values.companyName ?? null,
       is_approved: false, // 관리자 승인 전까지 로그인/이용 불가
     });
+
+    if (profileError) {
+      // 조용히 실패하고 넘어가면 "가입은 됐는데 프로필이 없는" 상태가 되므로 반드시 사용자에게 알립니다.
+      console.error("profile insert error:", profileError);
+      alert(`회원 정보 저장에 실패했습니다: ${profileError.message}`);
+      return;
+    }
 
     // 관리자 승인 전이므로 세션을 종료합니다.
     await supabase.auth.signOut();
