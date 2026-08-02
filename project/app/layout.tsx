@@ -1,13 +1,22 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/supabase/get-profile";
+import { HeaderNav } from "@/components/layout/HeaderNav";
 
 export const metadata: Metadata = {
   title: "RichLink — 대한민국 분양의 모든 정보를 연결하다",
   description: "대한민국 분양 전문 검색 플랫폼 RichLink",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const profile = user ? await getProfile(supabase, user.id) : null;
+
   return (
     <html lang="ko">
       <body className="bg-white text-ink">
@@ -17,9 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Rich<span className="text-gold">Link</span>
             </Link>
             <nav className="flex items-center gap-7 text-sm">
-              <Link href="/login">로그인</Link>
-              <Link href="/signup">회원가입</Link>
-              <Link href="/mypage">마이페이지</Link>
+              <HeaderNav isLoggedIn={!!user} role={profile?.role} />
               <Link
                 href="/listings/new"
                 className="rounded-sm border border-ink px-4.5 py-2 text-[13px] transition-colors hover:bg-ink hover:text-white"
