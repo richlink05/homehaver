@@ -167,26 +167,36 @@ create policy "profiles_self_update" on profiles
   for update using (auth.uid() = id);
 
 -- 관리자는 모든 프로필/매물을 관리 가능
-create policy "profiles_admin_all" on profiles
-  for all using (
-    exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
+-- 관리자 여부 확인용 함수 (security definer로 RLS를 우회해서 조회하므로,
+-- 이 함수를 정책 안에서 써도 "profiles 정책이 다시 profiles를 조회하는" 재귀가 생기지 않습니다.)
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from profiles where id = auth.uid() and role = 'admin'
   );
+$$;
+
+create policy "profiles_admin_all" on profiles
+  for all using (is_admin());
 
 create policy "listings_admin_all" on listings
-  for all using (
-    exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+  for all using (is_admin());
 
 alter table admin_banners enable row level security;
 alter table admin_notices enable row level security;
 
 create policy "banners_public_read" on admin_banners for select using (true);
 create policy "banners_admin_write" on admin_banners
-  for all using (exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin'));
+  for all using (is_admin());
 
 create policy "notices_public_read" on admin_notices for select using (true);
 create policy "notices_admin_write" on admin_notices
-  for all using (exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin'));
+  for all using (is_admin());
 
 -- 로그인 사용자만 상담신청/찜하기 가능, 본인 것만 조회
 create policy "inquiries_owner" on inquiries
