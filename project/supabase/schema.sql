@@ -209,6 +209,14 @@ create policy "favorites_owner" on favorites
 create policy "reviews_read_all" on reviews for select using (true);
 create policy "reviews_owner_write" on reviews for insert with check (auth.uid() = user_id);
 
+-- 위의 RLS 정책들이 실제로 적용되려면, 그 전 단계로 anon/authenticated 역할이
+-- 테이블 자체에 접근할 수 있는 기본 권한(GRANT)이 먼저 있어야 합니다.
+-- (RLS는 "어떤 행을 볼 수 있는지"만 제어하고, "테이블에 접근 가능한지"는 GRANT가 결정합니다.)
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant select on all tables in schema public to anon;
+grant execute on all functions in schema public to anon, authenticated;
+
 -- ============================================================
 -- Storage (분양 이미지 업로드)
 -- ============================================================
