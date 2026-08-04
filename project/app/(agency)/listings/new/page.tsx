@@ -167,7 +167,9 @@ export default function NewListingPage() {
       await uploadListingImages(listing.id, images);
     }
 
-    router.push("/listings");
+    // "내가 등록한 현장" 목록 탭이 아직 없어서(포팅 예정), 방금 등록한 매물 상세로 이동합니다.
+    // 승인 전이라도 본인이 등록한 매물은 본인 계정으로 조회할 수 있습니다.
+    router.push(`/listing/${listing.id}`);
   };
 
   return (
