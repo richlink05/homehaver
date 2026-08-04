@@ -31,6 +31,8 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     ? `${Math.min(...listing.listing_units.map((u: any) => u.exclusive_area))}㎡ ~ ${Math.max(
         ...listing.listing_units.map((u: any) => u.exclusive_area)
       )}㎡`
+    : listing.area_min && listing.area_max
+    ? `${listing.area_min}㎡ ~ ${listing.area_max}㎡`
     : "-";
 
   return (
@@ -64,6 +66,9 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                     <div className="mt-3.5 grid grid-cols-2 gap-4">
                       <InfoCard label="시공사" value={listing.builders?.name ?? "-"} />
                       <InfoCard label="브랜드" value={listing.builders?.brand_name ?? "-"} />
+                      <InfoCard label="총 세대수" value={listing.unit_count ? `${listing.unit_count}세대` : "-"} />
+                      <InfoCard label="총 동수" value={listing.building_count ? `${listing.building_count}개동` : "-"} />
+                      <InfoCard label="최고 층수" value={listing.top_floor ? `${listing.top_floor}층` : "-"} />
                     </div>
                   </>
                 ),
