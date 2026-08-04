@@ -8,6 +8,9 @@ export interface UploadedFile {
   previewUrl: string;
 }
 
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+const MAX_SIZE = 3 * 1024 * 1024; // 3MB
+
 export function ImageUploader({
   files,
   onChange,
@@ -17,12 +20,28 @@ export function ImageUploader({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const addFiles = (fileList: FileList) => {
-    const next = Array.from(fileList)
-      .filter((f) => f.type.startsWith("image/"))
-      .map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
-    onChange([...files, ...next]);
+    const rejected: string[] = [];
+    const accepted = Array.from(fileList).filter((f) => {
+      if (!ALLOWED_TYPES.includes(f.type)) {
+        rejected.push(`${f.name} (jpg/png 파일만 업로드 가능)`);
+        return false;
+      }
+      if (f.size > MAX_SIZE) {
+        rejected.push(`${f.name} (3MB 이하만 업로드 가능)`);
+        return false;
+      }
+      return true;
+    });
+
+    setError(rejected.length > 0 ? rejected.join(", ") + " — 업로드에서 제외되었습니다." : null);
+
+    if (accepted.length > 0) {
+      const next = accepted.map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
+      onChange([...files, ...next]);
+    }
   };
 
   const removeAt = (i: number) => {
@@ -34,7 +53,7 @@ export function ImageUploader({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/jpg,image/png"
         multiple
         className="hidden"
         onChange={(e) => e.target.files && addFiles(e.target.files)}
@@ -56,7 +75,10 @@ export function ImageUploader({
         }`}
       >
         대표 이미지, 평면도, 단지배치도 파일을 끌어놓거나 클릭하여 업로드하세요
+        <div className="mt-1 text-[11.5px] text-stone">jpg, png · 3MB 이하</div>
       </div>
+
+      {error && <p className="mt-2 text-[12px] text-red-500">{error}</p>}
 
       {files.length > 0 && (
         <div className="mt-3.5 flex flex-wrap gap-2.5">

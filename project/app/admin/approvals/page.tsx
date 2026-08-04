@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AdminPageHeader, StatusBadge } from "@/components/admin/AdminUI";
 import { ApprovalActions } from "@/components/admin/ApprovalActions";
@@ -53,7 +54,15 @@ export default async function ApprovalsPage({
           <tbody>
             {(listings ?? []).map((l) => (
               <tr key={l.id} className="border-b border-line last:border-0 hover:bg-mist/30">
-                <td className="px-5 py-3.5 font-medium">{l.title}</td>
+                <td className="px-5 py-3.5 font-medium">
+                  <Link
+                    href={`/listing/${l.id}`}
+                    target="_blank"
+                    className="text-gold-deep underline decoration-gold-soft underline-offset-2 hover:text-ink"
+                  >
+                    {l.title} ↗
+                  </Link>
+                </td>
                 <td className="px-5 py-3.5 text-gray-600">{l.type}</td>
                 <td className="px-5 py-3.5 text-gray-600">{l.profiles?.company_name ?? l.profiles?.name ?? "-"}</td>
                 <td className="px-5 py-3.5">
