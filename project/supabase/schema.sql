@@ -143,6 +143,9 @@ create table admin_notices (
 -- ============================================================
 alter table profiles enable row level security;
 alter table listings enable row level security;
+alter table builders enable row level security;
+alter table regions enable row level security;
+alter table listing_images enable row level security;
 alter table inquiries enable row level security;
 alter table favorites enable row level security;
 alter table reviews enable row level security;
@@ -160,6 +163,22 @@ create policy "listings_agency_insert" on listings
 
 create policy "listings_agency_update" on listings
   for update using (auth.uid() = agency_id);
+
+-- 시공사/지역은 누구나 조회 가능, 로그인한 사용자는 새 시공사를 등록(upsert) 가능
+create policy "builders_public_read" on builders for select using (true);
+create policy "builders_authenticated_write" on builders
+  for insert with check (auth.uid() is not null);
+create policy "builders_authenticated_update" on builders
+  for update using (auth.uid() is not null);
+
+create policy "regions_public_read" on regions for select using (true);
+
+-- 매물 이미지는 누구나 조회 가능, 해당 매물의 담당자만 등록/수정/삭제 가능
+create policy "listing_images_public_read" on listing_images for select using (true);
+create policy "listing_images_owner_write" on listing_images
+  for all using (
+    exists (select 1 from listings l where l.id = listing_images.listing_id and l.agency_id = auth.uid())
+  );
 
 -- 본인 프로필 생성(회원가입 시 1회) / 조회 / 수정
 create policy "profiles_self_insert" on profiles
