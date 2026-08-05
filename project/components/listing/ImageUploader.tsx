@@ -129,10 +129,13 @@ export function ImageUploader({
  * 선택된 이미지 파일들을 Supabase Storage(listing-images 버킷)에 업로드하고
  * listing_images 테이블에 레코드를 생성합니다. 썸네일 이미지가 있으면
  * listings.thumbnail_url에도 그 주소를 반영합니다 (목록 카드/상세 상단 이미지용).
+ *
+ * 실패한 파일이 있으면 조용히 넘어가지 않고 에러 목록을 반환합니다.
  */
 export async function uploadListingImages(listingId: string, files: UploadedFile[]) {
   const supabase = createClient();
   let thumbnailUrl: string | null = null;
+  const errors: string[] = [];
 
   // 카테고리별로 순서(sort_order)를 따로 매깁니다.
   const counters: Record<ImageCategory, number> = { 썸네일: 0, 평면도: 0, 인프라: 0 };
@@ -141,7 +144,11 @@ export async function uploadListingImages(listingId: string, files: UploadedFile
     const path = `${listingId}/${category}-${Date.now()}-${file.name}`;
 
     const { error: uploadError } = await supabase.storage.from("listing-images").upload(path, file);
-    if (uploadError) continue;
+    if (uploadError) {
+      console.error("이미지 업로드 실패:", category, file.name, uploadError);
+      errors.push(`${file.name} 업로드 실패: ${uploadError.message}`);
+      continue;
+    }
 
     const {
       data: { publicUrl },
@@ -150,16 +157,28 @@ export async function uploadListingImages(listingId: string, files: UploadedFile
     if (category === "썸네일") thumbnailUrl = publicUrl;
 
     // ⚠️ insert() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
-    await (supabase.from("listing_images") as any).insert({
+    const { error: insertError } = await (supabase.from("listing_images") as any).insert({
       listing_id: listingId,
       image_url: publicUrl,
       category,
       sort_order: counters[category]++,
     });
+    if (insertError) {
+      console.error("이미지 레코드 저장 실패:", category, file.name, insertError);
+      errors.push(`${file.name} 저장 실패: ${insertError.message}`);
+    }
   }
 
   if (thumbnailUrl) {
     // ⚠️ update()도 동일한 이유로 any 우회
-    await (supabase.from("listings") as any).update({ thumbnail_url: thumbnailUrl }).eq("id", listingId);
+    const { error: thumbError } = await (supabase.from("listings") as any)
+      .update({ thumbnail_url: thumbnailUrl })
+      .eq("id", listingId);
+    if (thumbError) {
+      console.error("썸네일 반영 실패:", thumbError);
+      errors.push(`썸네일 반영 실패: ${thumbError.message}`);
+    }
   }
+
+  return { errors };
 }

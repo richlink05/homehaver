@@ -164,7 +164,16 @@ export default function NewListingPage() {
 
     // 첨부 이미지를 Storage에 업로드하고 listing_images에 연결
     if (images.length > 0) {
-      await uploadListingImages(listing.id, images);
+      const { errors: imageErrors } = await uploadListingImages(listing.id, images);
+      if (imageErrors.length > 0) {
+        console.error("이미지 업로드 중 일부 실패:", imageErrors);
+        setSubmitError(
+          `현장 등록은 완료되었지만, 일부 이미지 업로드에 실패했습니다: ${imageErrors.join(" / ")}`
+        );
+        // 매물 자체는 정상 등록됐으니 잠시 후 상세페이지로 이동시켜 확인할 수 있게 합니다.
+        setTimeout(() => router.push(`/listing/${listing.id}`), 3500);
+        return;
+      }
     }
 
     // "내가 등록한 현장" 목록 탭이 아직 없어서(포팅 예정), 방금 등록한 매물 상세로 이동합니다.
