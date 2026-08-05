@@ -7,8 +7,8 @@ export interface Listing {
   address: string;
   price_min: number;
   price_max: number;
-  status: "분양예정" | "분양중" | "계약중" | "마감";
-  thumbnail_url: string;
+  status: "분양예정" | "분양중" | "마감";
+  thumbnail_url: string | null;
   view_count: number;
   like_count: number;
 }
@@ -28,12 +28,14 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <span className="absolute left-3 top-3 rounded-full bg-gold px-2.5 py-1 text-[11px] font-semibold text-white">
           {listing.status}
         </span>
-        <Image
-          src={listing.thumbnail_url}
-          alt={listing.title}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+        {listing.thumbnail_url && (
+          <Image
+            src={listing.thumbnail_url}
+            alt={listing.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        )}
       </div>
       <div className="p-4">
         <p className="mb-1.5 text-xs text-stone">{listing.address}</p>
