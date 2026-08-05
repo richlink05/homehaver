@@ -191,12 +191,6 @@ export default function NewListingPage() {
           <p className="text-[13.5px] text-stone">등록하신 분양 정보는 관리자 승인 후 검색결과에 노출됩니다.</p>
         </div>
 
-        {submitError && (
-          <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-600">
-            {submitError}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit(onSubmit)}>
           <FormSection title="기본 정보">
             <div className="col-span-2">
@@ -372,6 +366,27 @@ export default function NewListingPage() {
           </div>
         </form>
       </section>
+
+      {/* 등록 실패 안내 팝업 (스크롤 위치와 무관하게 항상 화면에 보임) */}
+      {submitError && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 p-5">
+          <div className="w-full max-w-[420px] rounded-lg bg-white p-6 shadow-xl">
+            <div className="mb-3 flex items-start gap-2.5">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-100 text-[13px] font-bold text-red-600">
+                !
+              </span>
+              <p className="text-[13.5px] leading-relaxed text-gray-700">{submitError}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSubmitError(null)}
+              className="mt-2 w-full rounded bg-ink py-2.5 text-[13.5px] font-semibold text-white"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 다음 우편번호 검색 레이어 */}
       {showAddressLayer && (
