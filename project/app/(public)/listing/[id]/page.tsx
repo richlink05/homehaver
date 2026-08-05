@@ -35,10 +35,22 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     ? `${listing.area_min}㎡ ~ ${listing.area_max}㎡`
     : "-";
 
+  // 입주예정은 연/월까지만 등록하므로(일자는 항상 1일로 저장됨) 화면에도 연/월까지만 표시합니다.
+  const moveInDateLabel = listing.move_in_date
+    ? `${listing.move_in_date.slice(0, 4)}년 ${Number(listing.move_in_date.slice(5, 7))}월`
+    : "미정";
+
+  const allImages: { id: string; image_url: string; category: string | null }[] = listing.listing_images ?? [];
+  const thumbnailImages = allImages.filter((img) => img.category === "썸네일");
+  const planImages = allImages.filter((img) => img.category === "평면도");
+  const infraImages = allImages.filter((img) => img.category === "인프라");
+  // 상단 갤러리는 썸네일을 우선 보여주고, 썸네일이 없으면 등록된 다른 이미지라도 보여줍니다.
+  const galleryImages = thumbnailImages.length > 0 ? thumbnailImages : allImages;
+
   return (
     <section>
       <ListingGallery
-        images={listing.listing_images ?? []}
+        images={galleryImages}
         title={listing.title}
         status={listing.status}
         address={address}
@@ -50,48 +62,35 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             area={areaRange}
             priceMin={listing.price_min}
             priceMax={listing.price_max}
-            moveInDate={listing.move_in_date ?? "미정"}
+            moveInDate={moveInDateLabel}
             builderName={listing.builders?.name ?? "-"}
           />
+
+          <h5 className="mb-3.5 text-[15px] font-semibold">단지 개요</h5>
+          <div className="mb-9 grid grid-cols-2 gap-4">
+            <InfoCard label="시공사" value={listing.builders?.name ?? "-"} />
+            <InfoCard label="브랜드" value={listing.builders?.brand_name ?? "-"} />
+            <InfoCard label="총 세대수" value={listing.unit_count ? `${listing.unit_count}세대` : "-"} />
+            <InfoCard label="총 동수" value={listing.building_count ? `${listing.building_count}개동` : "-"} />
+            <InfoCard label="최고 층수" value={listing.top_floor ? `${listing.top_floor}층` : "-"} />
+          </div>
 
           <ListingTabs
             tabs={[
               {
                 key: "desc",
                 label: "상세설명",
-                content: (
-                  <>
-                    <p>{listing.description}</p>
-                    <h5 className="mb-2 mt-5 text-[15px] font-semibold">단지 개요</h5>
-                    <div className="mt-3.5 grid grid-cols-2 gap-4">
-                      <InfoCard label="시공사" value={listing.builders?.name ?? "-"} />
-                      <InfoCard label="브랜드" value={listing.builders?.brand_name ?? "-"} />
-                      <InfoCard label="총 세대수" value={listing.unit_count ? `${listing.unit_count}세대` : "-"} />
-                      <InfoCard label="총 동수" value={listing.building_count ? `${listing.building_count}개동` : "-"} />
-                      <InfoCard label="최고 층수" value={listing.top_floor ? `${listing.top_floor}층` : "-"} />
-                    </div>
-                  </>
-                ),
+                content: <p>{listing.description}</p>,
               },
               {
                 key: "plan",
                 label: "평면도 · 단지배치도",
-                content: (
-                  <div className="grid grid-cols-2 gap-4">
-                    {(listing.listing_units ?? []).map((unit: any) => (
-                      <InfoCard
-                        key={unit.id}
-                        label={`${unit.unit_type} 타입`}
-                        value={`전용 ${unit.exclusive_area}㎡`}
-                      />
-                    ))}
-                  </div>
-                ),
+                content: <ImageTabGrid images={planImages} emptyText="등록된 평면도 · 단지배치도 이미지가 없습니다." />,
               },
               {
                 key: "life",
                 label: "교통 · 학군 · 인프라",
-                content: <p>교통, 학군, 생활 인프라 정보가 이곳에 표시됩니다.</p>,
+                content: <ImageTabGrid images={infraImages} emptyText="등록된 교통 · 학군 · 인프라 이미지가 없습니다." />,
               },
               {
                 key: "map",
@@ -109,6 +108,26 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
         </div>
       </div>
     </section>
+  );
+}
+
+function ImageTabGrid({
+  images,
+  emptyText,
+}: {
+  images: { id: string; image_url: string }[];
+  emptyText: string;
+}) {
+  if (images.length === 0) {
+    return <p className="text-[13.5px] text-stone">{emptyText}</p>;
+  }
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      {images.map((img) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={img.id} src={img.image_url} alt="" className="w-full rounded-md border border-line object-cover" />
+      ))}
+    </div>
   );
 }
 

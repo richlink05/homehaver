@@ -53,8 +53,8 @@ export interface Database {
           region_id: string | null;
           builder_id: string | null;
           title: string;
-          type: "아파트" | "오피스텔" | "지식산업센터" | "상가";
-          status: "분양예정" | "분양중" | "계약중" | "마감";
+          type: "아파트" | "오피스텔";
+          status: "분양예정" | "분양중" | "마감";
           price_min: number | null;
           price_max: number | null;
           area_min: number | null;
@@ -67,6 +67,7 @@ export interface Database {
           lat: number | null;
           lng: number | null;
           description: string | null;
+          thumbnail_url: string | null;
           manager_name: string | null;
           manager_phone: string | null;
           view_count: number;
@@ -95,6 +96,7 @@ export interface Database {
           lat?: number | null;
           lng?: number | null;
           description?: string | null;
+          thumbnail_url?: string | null;
           manager_name?: string | null;
           manager_phone?: string | null;
           view_count?: number;
@@ -123,6 +125,7 @@ export interface Database {
           lat?: number | null;
           lng?: number | null;
           description?: string | null;
+          thumbnail_url?: string | null;
           manager_name?: string | null;
           manager_phone?: string | null;
           view_count?: number;
@@ -153,21 +156,21 @@ export interface Database {
           id: string;
           listing_id: string;
           image_url: string;
-          category: "대표" | "평면도" | "배치도" | "영상" | null;
+          category: "썸네일" | "평면도" | "인프라" | null;
           sort_order: number;
         };
         Insert: {
           id?: string;
           listing_id: string;
           image_url: string;
-          category?: "대표" | "평면도" | "배치도" | "영상" | null;
+          category?: "썸네일" | "평면도" | "인프라" | null;
           sort_order?: number;
         };
         Update: {
           id?: string;
           listing_id?: string;
           image_url?: string;
-          category?: "대표" | "평면도" | "배치도" | "영상" | null;
+          category?: "썸네일" | "평면도" | "인프라" | null;
           sort_order?: number;
         };
         Relationships: [

@@ -199,15 +199,12 @@ export default function NewListingPage() {
               <select {...register("type")} className="input">
                 <option value="아파트">아파트</option>
                 <option value="오피스텔">오피스텔</option>
-                <option value="지식산업센터">지식산업센터</option>
-                <option value="상가">상가</option>
               </select>
             </Field>
             <Field label="분양상태">
               <select {...register("status")} className="input">
                 <option value="분양예정">분양예정</option>
                 <option value="분양중">분양중</option>
-                <option value="계약중">계약중</option>
                 <option value="마감">마감</option>
               </select>
             </Field>
@@ -325,9 +322,30 @@ export default function NewListingPage() {
             </div>
           </FormSection>
 
-          <FormSection title="이미지 · 평면도 업로드">
-            <div className="col-span-2">
-              <ImageUploader files={images} onChange={setImages} />
+          <FormSection title="이미지 업로드">
+            <div className="col-span-2 flex flex-col gap-6">
+              <ImageUploader
+                category="썸네일"
+                label="썸네일 (필수 1장)"
+                hint="목록 카드와 상세페이지 상단에 노출되는 대표 이미지입니다"
+                multiple={false}
+                files={images}
+                onChange={setImages}
+              />
+              <ImageUploader
+                category="평면도"
+                label="평면도 · 단지배치도"
+                hint="상세페이지 '평면도 · 단지배치도' 탭에 노출됩니다"
+                files={images}
+                onChange={setImages}
+              />
+              <ImageUploader
+                category="인프라"
+                label="교통 · 학군 · 인프라"
+                hint="상세페이지 '교통 · 학군 · 인프라' 탭에 노출됩니다"
+                files={images}
+                onChange={setImages}
+              />
             </div>
           </FormSection>
 

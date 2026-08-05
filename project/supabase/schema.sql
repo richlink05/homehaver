@@ -38,8 +38,8 @@ create table listings (
   region_id uuid references regions(id),
   builder_id uuid references builders(id),
   title text not null,
-  type text not null check (type in ('아파트','오피스텔','지식산업센터','상가')),
-  status text not null default '분양예정' check (status in ('분양예정','분양중','계약중','마감')),
+  type text not null check (type in ('아파트','오피스텔')),
+  status text not null default '분양예정' check (status in ('분양예정','분양중','마감')),
   price_min numeric,
   price_max numeric,
   area_min numeric,
@@ -52,6 +52,7 @@ create table listings (
   lat numeric,
   lng numeric,
   description text,
+  thumbnail_url text,
   manager_name text,
   manager_phone text,
   view_count int not null default 0,
@@ -70,7 +71,7 @@ create table listing_images (
   id uuid primary key default uuid_generate_v4(),
   listing_id uuid references listings(id) on delete cascade,
   image_url text not null,
-  category text check (category in ('대표','평면도','배치도','영상')),
+  category text check (category in ('썸네일','평면도','인프라')),
   sort_order int default 0
 );
 
