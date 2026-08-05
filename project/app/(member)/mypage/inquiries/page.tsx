@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
+
 const STATUS_STYLE: Record<string, string> = {
   대기: "bg-mist text-gray-600",
   응답완료: "bg-gold/15 text-gold-deep",

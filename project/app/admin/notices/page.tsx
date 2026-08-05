@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminPageHeader } from "@/components/admin/AdminUI";
 import { NoticeManager } from "@/components/admin/NoticeManager";
 
+export const dynamic = "force-dynamic";
+
+
 export default async function NoticesPage() {
   const supabase = createClient();
   const { data: notices } = await supabase

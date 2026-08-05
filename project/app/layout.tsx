@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/supabase/get-profile";
 import { HeaderNav } from "@/components/layout/HeaderNav";
 
+export const dynamic = "force-dynamic";
+
+
 export const metadata: Metadata = {
   title: "RichLink — 대한민국 분양의 모든 정보를 연결하다",
   description: "대한민국 분양 전문 검색 플랫폼 RichLink",

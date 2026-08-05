@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/supabase/get-profile";
 
+export const dynamic = "force-dynamic";
+
+
 const NAV = [
   { href: "/admin/approvals", label: "분양 승인" },
   { href: "/admin/users", label: "회원관리" },

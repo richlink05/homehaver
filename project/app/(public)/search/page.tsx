@@ -5,6 +5,9 @@ import { ListingFilter } from "@/components/listing/ListingFilter";
 import { SortSelect } from "@/components/listing/SortSelect";
 import { ListingGrid } from "@/components/listing/ListingGrid";
 
+export const dynamic = "force-dynamic";
+
+
 interface SearchPageProps {
   searchParams: {
     q?: string;

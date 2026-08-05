@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminPageHeader } from "@/components/admin/AdminUI";
 import { BannerManager } from "@/components/admin/BannerManager";
 
+export const dynamic = "force-dynamic";
+
+
 export default async function BannersPage() {
   const supabase = createClient();
   const { data: banners } = await supabase.from("admin_banners").select("*").order("sort_order");

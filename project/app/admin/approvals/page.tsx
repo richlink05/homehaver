@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminPageHeader, StatusBadge } from "@/components/admin/AdminUI";
 import { ApprovalActions } from "@/components/admin/ApprovalActions";
 
+export const dynamic = "force-dynamic";
+
+
 export default async function ApprovalsPage({
   searchParams,
 }: {

@@ -2,6 +2,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ListingCard } from "@/components/listing/ListingCard";
 
+export const dynamic = "force-dynamic";
+
+
 const NAV_ITEMS = [
   { label: "찜한 분양", href: "/mypage/favorites" },
   { label: "최근 본 현장", href: "/mypage/recent" },

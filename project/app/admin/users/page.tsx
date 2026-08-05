@@ -4,6 +4,9 @@ import { RoleSelect } from "@/components/admin/RoleSelect";
 import { UserApprovalToggle } from "@/components/admin/UserApprovalToggle";
 import type { ProfileRow } from "@/lib/supabase/get-profile";
 
+export const dynamic = "force-dynamic";
+
+
 type UserListRow = Pick<
   ProfileRow,
   "id" | "name" | "email" | "phone" | "role" | "company_name" | "is_approved" | "created_at"

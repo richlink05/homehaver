@@ -7,6 +7,9 @@ import { ManagerContact } from "@/components/listing/ManagerContact";
 import { ConsultForm } from "@/components/consult/ConsultForm";
 import { KakaoMap } from "@/components/map/KakaoMap";
 
+export const dynamic = "force-dynamic";
+
+
 export default async function ListingDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
 
