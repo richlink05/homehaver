@@ -5,32 +5,32 @@ import Script from "next/script";
 
 declare global {
   interface Window {
-    kakao: any;
+    naver: any;
   }
 }
 
-export function KakaoMap({ lat, lng, title }: { lat: number | null; lng: number | null; title: string }) {
+export function NaverMap({ lat, lng, title }: { lat: number | null; lng: number | null; title: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
-  const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
+  const clientId = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID;
 
   useEffect(() => {
-    if (!scriptLoaded || !window.kakao || !containerRef.current || !lat || !lng) return;
+    if (!scriptLoaded || !window.naver || !containerRef.current || !lat || !lng) return;
 
-    window.kakao.maps.load(() => {
-      const center = new window.kakao.maps.LatLng(lat, lng);
-      const map = new window.kakao.maps.Map(containerRef.current, { center, level: 3 });
-      const marker = new window.kakao.maps.Marker({ position: center });
-      marker.setMap(map);
+    const center = new window.naver.maps.LatLng(lat, lng);
+    const map = new window.naver.maps.Map(containerRef.current, {
+      center,
+      zoom: 16,
     });
-  }, [scriptLoaded, lat, lng]);
+    new window.naver.maps.Marker({ position: center, map, title });
+  }, [scriptLoaded, lat, lng, title]);
 
-  if (!appKey) {
+  if (!clientId) {
     return (
       <div className="flex h-[280px] items-center justify-center rounded-lg bg-mist text-center text-[13px] text-stone">
-        카카오맵 API 키가 설정되지 않았습니다.
+        네이버 지도 API 키가 설정되지 않았습니다.
         <br />
-        (.env의 NEXT_PUBLIC_KAKAO_MAP_KEY를 확인해주세요)
+        (.env의 NEXT_PUBLIC_NAVER_MAP_CLIENT_ID를 확인해주세요)
       </div>
     );
   }
@@ -45,9 +45,8 @@ export function KakaoMap({ lat, lng, title }: { lat: number | null; lng: number 
 
   return (
     <>
-      {/* autoload=false로 불러온 뒤 kakao.maps.load()로 직접 초기화 시점을 제어합니다. */}
       <Script
-        src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false`}
+        src={`https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${clientId}`}
         strategy="afterInteractive"
         onLoad={() => setScriptLoaded(true)}
       />

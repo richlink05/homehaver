@@ -223,10 +223,23 @@ create policy "notices_public_read" on admin_notices for select using (true);
 create policy "notices_admin_write" on admin_notices
   for all using (is_admin());
 
--- 로그인 사용자만 상담신청/찜하기 가능, 본인 것만 조회
-create policy "inquiries_owner" on inquiries
-  for all using (auth.uid() = user_id or
-    exists (select 1 from listings l where l.id = listing_id and l.agency_id = auth.uid()));
+-- 상담신청(inquiries): 등록은 비회원 포함 누구나 가능해야 합니다(핵심 리드 채널).
+-- 조회/수정은 신청자 본인(로그인한 경우), 해당 매물 담당자, 관리자만 가능합니다.
+create policy "inquiries_public_insert" on inquiries
+  for insert with check (true);
+
+create policy "inquiries_owner_select" on inquiries
+  for select using (
+    auth.uid() = user_id
+    or exists (select 1 from listings l where l.id = listing_id and l.agency_id = auth.uid())
+    or is_admin()
+  );
+
+create policy "inquiries_owner_update" on inquiries
+  for update using (
+    exists (select 1 from listings l where l.id = listing_id and l.agency_id = auth.uid())
+    or is_admin()
+  );
 
 create policy "favorites_owner" on favorites
   for all using (auth.uid() = user_id);
@@ -240,6 +253,8 @@ create policy "reviews_owner_write" on reviews for insert with check (auth.uid()
 grant usage on schema public to anon, authenticated;
 grant select, insert, update, delete on all tables in schema public to authenticated;
 grant select on all tables in schema public to anon;
+-- 비회원도 상담신청은 등록할 수 있어야 하므로 inquiries 테이블만 별도로 insert 권한을 추가로 부여합니다.
+grant insert on inquiries to anon;
 grant execute on all functions in schema public to anon, authenticated;
 
 -- ============================================================

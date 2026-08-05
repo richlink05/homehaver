@@ -6,16 +6,29 @@ import { formatPhoneNumber } from "@/lib/utils";
 export function ConsultForm({ listingId, listingTitle }: { listingId: string; listingTitle: string }) {
   const [form, setForm] = useState({ name: "", phone: "", message: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     if (!form.name || !form.phone) return;
+    setError(null);
     setStatus("loading");
-    const res = await fetch("/api/inquiries", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ listing_id: listingId, ...form }),
-    });
-    setStatus(res.ok ? "done" : "idle");
+    try {
+      const res = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listing_id: listingId, ...form }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setError(json.error ?? "알 수 없는 오류가 발생했습니다.");
+        setStatus("idle");
+        return;
+      }
+      setStatus("done");
+    } catch (e) {
+      setError("네트워크 오류로 신청에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      setStatus("idle");
+    }
   };
 
   if (status === "done") {
@@ -60,6 +73,7 @@ export function ConsultForm({ listingId, listingTitle }: { listingId: string; li
       >
         {status === "loading" ? "신청 중..." : "상담 신청하기"}
       </button>
+      {error && <p className="mt-2.5 text-center text-[12.5px] text-red-500">{error}</p>}
       <p className="mt-3 text-center text-[11.5px] leading-[1.6] text-stone">
         신청하신 정보는 상담 목적으로만 사용되며
         <br />
