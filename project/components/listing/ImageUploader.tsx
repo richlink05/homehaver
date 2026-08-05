@@ -14,6 +14,13 @@ export interface UploadedFile {
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 const MAX_SIZE = 3 * 1024 * 1024; // 3MB
 
+// Storage 경로(key)에는 한글 등 비영문 문자를 쓸 수 없어서, 카테고리명을 영문 슬러그로 매핑합니다.
+const CATEGORY_SLUG: Record<ImageCategory, string> = {
+  썸네일: "thumbnail",
+  평면도: "floorplan",
+  인프라: "infra",
+};
+
 export function ImageUploader({
   category,
   label,
@@ -141,7 +148,11 @@ export async function uploadListingImages(listingId: string, files: UploadedFile
   const counters: Record<ImageCategory, number> = { 썸네일: 0, 평면도: 0, 인프라: 0 };
 
   for (const { file, category } of files) {
-    const path = `${listingId}/${category}-${Date.now()}-${file.name}`;
+    // 경로에는 한글이 들어가면 Storage가 거부하므로, 확장자만 원본에서 가져오고
+    // 나머지는 전부 영문 슬러그 + 시간값 + 랜덤값으로 구성합니다.
+    const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const randomId = Math.random().toString(36).slice(2, 8);
+    const path = `${listingId}/${CATEGORY_SLUG[category]}-${Date.now()}-${randomId}.${ext}`;
 
     const { error: uploadError } = await supabase.storage.from("listing-images").upload(path, file);
     if (uploadError) {
