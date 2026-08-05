@@ -14,10 +14,19 @@ export function createClient() {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch {
+            // 서버 컴포넌트(레이아웃/페이지 렌더링) 중에는 쿠키를 수정할 수 없어 여기서 에러가 납니다.
+            // 아래 middleware.ts가 매 요청마다 세션을 미리 갱신해주므로 무시해도 안전합니다.
+          }
         },
         remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: "", ...options });
+          try {
+            cookieStore.set({ name, value: "", ...options });
+          } catch {
+            // 위와 동일한 이유로 무시해도 안전합니다.
+          }
         },
       },
     }
