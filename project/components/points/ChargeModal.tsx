@@ -23,7 +23,8 @@ export function ChargeModal() {
     }
 
     setLoading(true);
-    const { error: rpcError } = await supabase.rpc("add_points", {
+    // ⚠️ rpc() 인자 타입 추론 문제 우회 (increment_view_count와 동일한 이유)
+    const { error: rpcError } = await (supabase.rpc as any)("add_points", {
       p_amount: amount,
       p_type: "충전",
       p_note: `${method} 충전`,
