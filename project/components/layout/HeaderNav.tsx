@@ -31,7 +31,6 @@ export function HeaderNav({
 
   return (
     <>
-      {role === "agency" && <Link href="/listings">내 현장</Link>}
       <Link href={role === "admin" ? "/admin/approvals" : "/mypage"}>
         {role === "admin" ? "관리자 콘솔" : "마이페이지"}
       </Link>
