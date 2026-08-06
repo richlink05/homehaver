@@ -13,9 +13,56 @@ create table profiles (
   email text,
   company_name text,
   is_approved boolean not null default false,
+  points integer not null default 0,
   created_at timestamptz not null default now()
 );
 
+-- ---------- 포인트 거래내역 (충전/사용/환불) ----------
+create table point_transactions (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references profiles(id) on delete cascade,
+  type text not null check (type in ('충전','사용','환불')),
+  amount integer not null, -- 충전/환불은 양수, 사용은 음수로 저장합니다.
+  note text,
+  balance_after integer not null,
+  created_at timestamptz not null default now()
+);
+
+create index idx_point_transactions_user on point_transactions (user_id, created_at desc);
+
+-- 포인트 적립/차감은 반드시 이 함수를 통해서만 이루어집니다.
+-- security definer로 실행되어 profiles.points 갱신과 거래내역 insert가 하나의 트랜잭션으로
+-- 원자적으로 처리되고(중간에 실패해도 잔액과 내역이 어긋나지 않음), 항상 auth.uid() 본인 계정만
+-- 조작하도록 되어있어 다른 사람 포인트를 건드릴 수 없습니다.
+create or replace function add_points(p_amount integer, p_type text, p_note text)
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  new_balance integer;
+begin
+  if auth.uid() is null then
+    raise exception '로그인이 필요합니다.';
+  end if;
+  if p_type not in ('충전','사용','환불') then
+    raise exception '알 수 없는 포인트 거래 유형입니다.';
+  end if;
+
+  update profiles set points = points + p_amount where id = auth.uid()
+  returning points into new_balance;
+
+  if new_balance < 0 then
+    raise exception '포인트가 부족합니다.';
+  end if;
+
+  insert into point_transactions (user_id, type, amount, note, balance_after)
+  values (auth.uid(), p_type, p_amount, p_note, new_balance);
+
+  return new_balance;
+end;
+$$;
 -- ---------- REGIONS / BUILDERS ----------
 create table regions (
   id uuid primary key default uuid_generate_v4(),
@@ -144,6 +191,12 @@ create table admin_notices (
 -- Row Level Security
 -- ============================================================
 alter table profiles enable row level security;
+alter table point_transactions enable row level security;
+
+create policy "point_transactions_owner_select" on point_transactions
+  for select using (auth.uid() = user_id or is_admin());
+-- insert는 add_points() 함수(security definer)를 통해서만 이루어지므로
+-- 별도의 insert 정책은 두지 않습니다 (직접 insert는 막혀있는 것이 안전합니다).
 alter table listings enable row level security;
 alter table builders enable row level security;
 alter table regions enable row level security;

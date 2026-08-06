@@ -22,6 +22,7 @@ export interface Database {
           email: string | null;
           company_name: string | null;
           is_approved: boolean;
+          points: number;
           created_at: string;
         };
         Insert: {
@@ -32,6 +33,7 @@ export interface Database {
           email?: string | null;
           company_name?: string | null;
           is_approved?: boolean;
+          points?: number;
           created_at?: string;
         };
         Update: {
@@ -42,9 +44,48 @@ export interface Database {
           email?: string | null;
           company_name?: string | null;
           is_approved?: boolean;
+          points?: number;
           created_at?: string;
         };
         Relationships: [];
+      };
+      point_transactions: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: "충전" | "사용" | "환불";
+          amount: number;
+          note: string | null;
+          balance_after: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: "충전" | "사용" | "환불";
+          amount: number;
+          note?: string | null;
+          balance_after: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          type?: "충전" | "사용" | "환불";
+          amount?: number;
+          note?: string | null;
+          balance_after?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "point_transactions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       listings: {
         Row: {
@@ -339,6 +380,10 @@ export interface Database {
       increment_view_count: {
         Args: { listing_id: string };
         Returns: void;
+      };
+      add_points: {
+        Args: { p_amount: number; p_type: string; p_note: string };
+        Returns: number;
       };
     };
     Enums: {
