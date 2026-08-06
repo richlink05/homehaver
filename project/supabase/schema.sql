@@ -58,6 +58,7 @@ create table listings (
   view_count int not null default 0,
   like_count int not null default 0,
   is_approved boolean not null default false,
+  rejection_reason text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

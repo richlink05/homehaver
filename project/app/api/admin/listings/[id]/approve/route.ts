@@ -17,11 +17,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ data: null, error: "관리자 권한이 필요합니다." }, { status: 403 });
   }
 
-  const { is_approved } = await req.json();
+  const { is_approved, rejection_reason } = await req.json();
+
+  // 승인 시에는 이전 반려사유를 지우고, 반려 시에는 사유를 함께 저장합니다.
+  const updatePayload = is_approved
+    ? { is_approved: true, rejection_reason: null }
+    : { is_approved: false, rejection_reason: rejection_reason ?? null };
 
   // ⚠️ update() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
   const { data, error } = await (supabase.from("listings") as any)
-    .update({ is_approved })
+    .update(updatePayload)
     .eq("id", params.id)
     .select()
     .single();

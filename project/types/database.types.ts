@@ -73,6 +73,7 @@ export interface Database {
           view_count: number;
           like_count: number;
           is_approved: boolean;
+          rejection_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -102,6 +103,7 @@ export interface Database {
           view_count?: number;
           like_count?: number;
           is_approved?: boolean;
+          rejection_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -131,6 +133,7 @@ export interface Database {
           view_count?: number;
           like_count?: number;
           is_approved?: boolean;
+          rejection_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };

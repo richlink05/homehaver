@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function ApprovalsPage({
   searchParams,
 }: {
-  searchParams: { filter?: "pending" | "approved" };
+  searchParams: { filter?: "pending" | "approved" | "rejected" };
 }) {
   const supabase = createClient();
   const filter = searchParams.filter ?? "pending";
@@ -20,16 +20,19 @@ export default async function ApprovalsPage({
     type: string;
     status: string;
     is_approved: boolean;
+    rejection_reason: string | null;
     created_at: string;
     profiles: { company_name: string | null; name: string | null } | null;
   };
 
   let query = supabase
     .from("listings")
-    .select("id, title, type, status, is_approved, created_at, profiles(company_name, name)")
+    .select("id, title, type, status, is_approved, rejection_reason, created_at, profiles(company_name, name)")
     .order("created_at", { ascending: false });
 
-  query = filter === "pending" ? query.eq("is_approved", false) : query.eq("is_approved", true);
+  if (filter === "pending") query = query.eq("is_approved", false).is("rejection_reason", null);
+  if (filter === "approved") query = query.eq("is_approved", true);
+  if (filter === "rejected") query = query.eq("is_approved", false).not("rejection_reason", "is", null);
 
   const { data: listings } = await query.returns<ApprovalListingRow[]>();
 
@@ -40,6 +43,7 @@ export default async function ApprovalsPage({
       <div className="mb-5 flex gap-2">
         <FilterTab href="/admin/approvals?filter=pending" active={filter === "pending"} label="승인 대기" />
         <FilterTab href="/admin/approvals?filter=approved" active={filter === "approved"} label="승인 완료" />
+        <FilterTab href="/admin/approvals?filter=rejected" active={filter === "rejected"} label="반려" />
       </div>
 
       <div className="overflow-hidden rounded-lg border border-line bg-white">
@@ -65,6 +69,11 @@ export default async function ApprovalsPage({
                   >
                     {l.title} ↗
                   </Link>
+                  {l.rejection_reason && (
+                    <p className="mt-1 max-w-[280px] text-[11.5px] leading-relaxed text-red-500">
+                      반려사유: {l.rejection_reason}
+                    </p>
+                  )}
                 </td>
                 <td className="px-5 py-3.5 text-gray-600">{l.type}</td>
                 <td className="px-5 py-3.5 text-gray-600">{l.profiles?.company_name ?? l.profiles?.name ?? "-"}</td>
