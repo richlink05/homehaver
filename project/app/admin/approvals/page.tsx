@@ -24,12 +24,12 @@ export default async function ApprovalsPage({
     is_approved: boolean;
     rejection_reason: string | null;
     created_at: string;
-    profiles: { company_name: string | null; name: string | null } | null;
+    registrant_id: string | null;
   };
 
   let query = supabase
     .from("listings")
-    .select("id, title, type, status, is_approved, rejection_reason, created_at, profiles(company_name, name)")
+    .select("id, title, type, status, is_approved, rejection_reason, created_at, registrant_id")
     .order("created_at", { ascending: false });
 
   if (filter === "pending") query = query.eq("is_approved", false).is("rejection_reason", null);
@@ -37,6 +37,16 @@ export default async function ApprovalsPage({
   if (filter === "rejected") query = query.eq("is_approved", false).not("rejection_reason", "is", null);
 
   const { data: listings } = await query.returns<ApprovalListingRow[]>();
+
+  // listings에는 profiles로 연결된 외래키가 2개(agency_id, registrant_id)라 조인 시 모호해질 수 있어,
+  // 등록자 정보는 별도로 한 번에 조회해서 매칭합니다.
+  const registrantIds = [...new Set((listings ?? []).map((l) => l.registrant_id).filter(Boolean))] as string[];
+  const { data: registrants } = await supabase
+    .from("profiles")
+    .select("id, name, company_name")
+    .in("id", registrantIds.length > 0 ? registrantIds : ["00000000-0000-0000-0000-000000000000"])
+    .returns<{ id: string; name: string | null; company_name: string | null }[]>();
+  const registrantMap = new Map((registrants ?? []).map((r) => [r.id, r]));
 
   return (
     <div>
@@ -78,7 +88,11 @@ export default async function ApprovalsPage({
                   )}
                 </td>
                 <td className="px-5 py-3.5 text-gray-600">{l.type}</td>
-                <td className="px-5 py-3.5 text-gray-600">{l.profiles?.company_name ?? l.profiles?.name ?? "-"}</td>
+                <td className="px-5 py-3.5 text-gray-600">
+                  {registrantMap.get(l.registrant_id ?? "")?.company_name ??
+                    registrantMap.get(l.registrant_id ?? "")?.name ??
+                    "-"}
+                </td>
                 <td className="px-5 py-3.5">
                   <StatusBadge value={l.status} />
                 </td>

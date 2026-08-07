@@ -32,12 +32,25 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   const { data: listing } = await supabase
     .from("listings")
     .select(
-      "*, listing_images(*), listing_units(*), builders(name, brand_name), regions(sido, sigungu, dong), manager:profiles!listings_agency_id_fkey(name, phone), listing_waitlist(id)"
+      "*, listing_images(*), listing_units(*), builders(name, brand_name), regions(sido, sigungu, dong), listing_waitlist(id)"
     )
     .eq("id", params.id)
     .single<Record<string, any>>();
 
   if (!listing) notFound();
+
+  // 담당자(agency_id) 프로필은 listings에 profiles로 연결된 외래키가 2개(agency_id, registrant_id)라
+  // 조인 시 어느 쪽인지 모호해질 수 있어, 여기서는 조인 없이 별도로 안전하게 조회합니다.
+  let manager: { name: string | null; phone: string | null } | null = null;
+  if (listing.agency_id) {
+    const { data: managerProfile } = await supabase
+      .from("profiles")
+      .select("name, phone")
+      .eq("id", listing.agency_id)
+      .single<{ name: string | null; phone: string | null }>();
+    manager = managerProfile ?? null;
+  }
+  listing.manager = manager;
 
   // ⚠️ rpc() 인자 타입 추론 문제 우회 (insert/update와 동일한 이유)
   await (supabase.rpc as any)("increment_view_count", { listing_id: params.id });
