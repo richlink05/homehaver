@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ListingGallery } from "@/components/listing/ListingGallery";
 import { ListingInfoRow } from "@/components/listing/ListingInfoRow";
@@ -29,7 +28,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     viewerRole = viewerProfile?.role ?? null;
   }
 
-  const { data: listing } = await supabase
+  const { data: listing, error: listingError } = await supabase
     .from("listings")
     .select(
       "*, listing_images(*), listing_units(*), builders(name, brand_name), regions(sido, sigungu, dong), listing_waitlist(id)"
@@ -37,7 +36,15 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     .eq("id", params.id)
     .single<Record<string, any>>();
 
-  if (!listing) notFound();
+  if (listingError || !listing) {
+    console.error("매물 상세 조회 실패:", listingError);
+    return (
+      <div className="mx-auto max-w-[600px] px-8 py-24 text-center">
+        <p className="mb-2 text-[15px] font-semibold">매물을 불러오지 못했습니다</p>
+        <p className="text-[13px] text-red-500">{listingError?.message ?? "알 수 없는 오류"}</p>
+      </div>
+    );
+  }
 
   // 담당자(agency_id) 프로필은 listings에 profiles로 연결된 외래키가 2개(agency_id, registrant_id)라
   // 조인 시 어느 쪽인지 모호해질 수 있어, 여기서는 조인 없이 별도로 안전하게 조회합니다.
