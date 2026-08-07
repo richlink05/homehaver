@@ -234,7 +234,11 @@ create policy "regions_public_read" on regions for select using (true);
 create policy "listing_images_public_read" on listing_images for select using (true);
 create policy "listing_images_owner_write" on listing_images
   for all using (
-    exists (select 1 from listings l where l.id = listing_images.listing_id and l.agency_id = auth.uid())
+    exists (
+      select 1 from listings l
+      where l.id = listing_images.listing_id
+        and (l.agency_id = auth.uid() or l.registrant_id = auth.uid())
+    )
   );
 
 -- 본인 프로필 생성(회원가입 시 1회) / 조회 / 수정
