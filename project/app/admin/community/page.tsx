@@ -24,7 +24,11 @@ export default async function AdminCommunityPage({
     .limit(100)
     .returns<PostRow[]>();
 
-  const { data: keywords } = await supabase.from("banned_keywords").select("id, keyword").order("keyword");
+  const { data: keywords } = await supabase
+    .from("banned_keywords")
+    .select("id, keyword")
+    .order("keyword")
+    .returns<{ id: string; keyword: string }[]>();
 
   type ReportRow = {
     id: string;

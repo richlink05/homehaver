@@ -45,9 +45,13 @@ export default async function CommunityPostPage({ params }: { params: { id: stri
     .from("community_comments")
     .select("id, author, content, created_at")
     .eq("post_id", params.id)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .returns<{ id: string; author: string; content: string; created_at: string }[]>();
 
-  const { data: blockedRows } = await supabase.from("blocked_authors").select("author_name");
+  const { data: blockedRows } = await supabase
+    .from("blocked_authors")
+    .select("author_name")
+    .returns<{ author_name: string }[]>();
   const blockedNames = new Set((blockedRows ?? []).map((b) => b.author_name));
 
   const {

@@ -30,7 +30,8 @@ export default async function SearchStatsPage({
   const { data: rows } = await supabase
     .from("search_log")
     .select("term")
-    .gte("created_at", since.toISOString());
+    .gte("created_at", since.toISOString())
+    .returns<{ term: string }[]>();
 
   const counts = new Map<string, number>();
   (rows ?? []).forEach((r) => {
