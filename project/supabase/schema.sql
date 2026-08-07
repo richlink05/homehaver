@@ -244,6 +244,11 @@ create policy "profiles_self_insert" on profiles
 create policy "profiles_self_select" on profiles
   for select using (auth.uid() = id);
 
+-- 승인된 분양담당자 계정은 매물 상세페이지에서 담당자 연락처로 공개 노출되어야 하므로,
+-- 누구나(비회원 포함) 조회할 수 있게 합니다. 일반회원/미승인 계정은 여전히 본인만 조회 가능합니다.
+create policy "profiles_agency_public_read" on profiles
+  for select using (role = 'agency' and is_approved = true);
+
 create policy "profiles_self_update" on profiles
   for update using (auth.uid() = id);
 
