@@ -22,13 +22,13 @@ export default async function AdminPointsPage({
   if (q) userQuery = userQuery.or(`name.ilike.%${q}%,email.ilike.%${q}%`);
   const { data: users } = await userQuery.returns<UserRow[]>();
 
-  const { data: managingRows } = await supabase
+  const managingRes = await supabase
     .from("listings")
     .select("agency_id, title")
-    .not("agency_id", "is", null)
-    .returns<{ agency_id: string; title: string }[]>();
+    .not("agency_id", "is", null);
+  const managingRows = (managingRes.data ?? []) as { agency_id: string; title: string }[];
   const managingMap = new Map<string, string>();
-  (managingRows ?? []).forEach((r) => managingMap.set(r.agency_id, r.title));
+  managingRows.forEach((r) => managingMap.set(r.agency_id, r.title));
 
   const totalPoints = (users ?? []).reduce((sum, u) => sum + u.points, 0);
 
