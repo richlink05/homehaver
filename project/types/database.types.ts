@@ -550,6 +550,12 @@ export interface Database {
         Update: { id?: string; term?: string; created_at?: string };
         Relationships: [];
       };
+      daily_visit_counts: {
+        Row: { visit_date: string; count: number };
+        Insert: { visit_date: string; count?: number };
+        Update: { visit_date?: string; count?: number };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -624,6 +630,10 @@ export interface Database {
       find_email_by_name_phone: {
         Args: { p_name: string; p_phone: string };
         Returns: string;
+      };
+      increment_daily_visit: {
+        Args: Record<PropertyKey, never>;
+        Returns: void;
       };
     };
     Enums: {

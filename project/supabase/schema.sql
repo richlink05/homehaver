@@ -805,6 +805,33 @@ returns void as $$
 $$ language sql security definer;
 
 -- ============================================================
+-- 일별 방문자수
+-- ============================================================
+create table if not exists daily_visit_counts (
+  visit_date date primary key,
+  count int not null default 0
+);
+
+alter table daily_visit_counts enable row level security;
+drop policy if exists "daily_visits_admin_select" on daily_visit_counts;
+create policy "daily_visits_admin_select" on daily_visit_counts for select using (is_admin());
+
+-- 미들웨어에서 방문 1회당 호출합니다(하루 1인 1회로 쿠키로 중복 방지).
+create or replace function increment_daily_visit()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into daily_visit_counts (visit_date, count) values (current_date, 1)
+    on conflict (visit_date) do update set count = daily_visit_counts.count + 1;
+end;
+$$;
+
+grant execute on function increment_daily_visit() to anon, authenticated;
+
+-- ============================================================
 -- 최초 관리자 계정 안내
 -- ============================================================
 -- 신규 가입자는 기본적으로 is_approved = false 상태입니다.

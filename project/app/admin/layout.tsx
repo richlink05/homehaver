@@ -8,14 +8,14 @@ export const dynamic = "force-dynamic";
 
 const NAV = [
   { href: "/admin/approvals", label: "분양 승인" },
-  { href: "/admin/inquiries", label: "상담문의" },
-  { href: "/admin/community", label: "커뮤니티" },
-  { href: "/admin/search-stats", label: "검색어 통계" },
   { href: "/admin/users", label: "회원관리" },
-  { href: "/admin/ads", label: "광고관리" },
+  { href: "/admin/inquiries", label: "상담문의" },
+  { href: "/admin/points", label: "포인트관리" },
+  { href: "/admin/search-stats", label: "검색어 통계" },
+  { href: "/admin/stats", label: "일별통계" },
   { href: "/admin/banners", label: "배너관리" },
+  { href: "/admin/community", label: "커뮤니티" },
   { href: "/admin/notices", label: "공지사항" },
-  { href: "/admin/popups", label: "팝업관리" },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
