@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminPageHeader } from "@/components/admin/AdminUI";
 import { RoleSelect } from "@/components/admin/RoleSelect";
 import { UserApprovalToggle } from "@/components/admin/UserApprovalToggle";
+import { BannedToggle } from "@/components/admin/BannedToggle";
 import type { ProfileRow } from "@/lib/supabase/get-profile";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 type UserListRow = Pick<
   ProfileRow,
   "id" | "name" | "email" | "phone" | "role" | "company_name" | "is_approved" | "created_at"
->;
+> & { banned: boolean };
 
 export default async function UsersPage({
   searchParams,
@@ -21,7 +22,7 @@ export default async function UsersPage({
 
   let query = supabase
     .from("profiles")
-    .select("id, name, email, phone, role, company_name, is_approved, created_at")
+    .select("id, name, email, phone, role, company_name, is_approved, banned, created_at")
     .order("created_at", { ascending: false });
 
   if (searchParams.q) {
@@ -82,9 +83,15 @@ export default async function UsersPage({
                   >
                     {u.is_approved ? "승인완료" : "승인대기"}
                   </span>
+                  {u.banned && (
+                    <span className="ml-1.5 rounded-full bg-red-50 px-2.5 py-1 text-[11.5px] font-semibold text-red-500">
+                      활동금지
+                    </span>
+                  )}
                 </td>
                 <td className="px-5 py-3.5 text-right">
                   <UserApprovalToggle userId={u.id} approved={u.is_approved} />
+                  <BannedToggle userId={u.id} banned={u.banned} />
                 </td>
               </tr>
             ))}

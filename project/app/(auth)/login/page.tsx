@@ -4,6 +4,8 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { FindIdModal } from "@/components/auth/FindIdModal";
+import { FindPasswordModal } from "@/components/auth/FindPasswordModal";
 
 function LoginForm() {
   const router = useRouter();
@@ -15,6 +17,8 @@ function LoginForm() {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
   const [loading, setLoading] = useState(false);
+  const [findIdOpen, setFindIdOpen] = useState(false);
+  const [findPwOpen, setFindPwOpen] = useState(false);
 
   const justVerified = searchParams.get("verified") === "1";
 
@@ -44,9 +48,9 @@ function LoginForm() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("is_approved, role")
+      .select("is_approved, role, banned")
       .eq("id", data.user.id)
-      .single<{ is_approved: boolean; role: "user" | "agency" | "admin" }>();
+      .single<{ is_approved: boolean; role: "user" | "agency" | "admin"; banned: boolean }>();
 
     // 프로필 row가 없거나 조회에 실패한 경우도 "미승인"과 동일하게 차단합니다.
     // (승인 여부를 확인할 수 없으면 통과시키지 않는 것이 안전합니다.)
@@ -54,6 +58,12 @@ function LoginForm() {
       await supabase.auth.signOut();
       setLoading(false);
       setError("관리자 승인 대기 중인 계정입니다. 승인 완료 후 로그인해주세요.");
+      return;
+    }
+    if (profile.banned === true) {
+      await supabase.auth.signOut();
+      setLoading(false);
+      setError("이용이 제한된 계정입니다. 자세한 사항은 고객센터(1544-0892)로 문의해주세요.");
       return;
     }
 
@@ -123,12 +133,24 @@ function LoginForm() {
         </button>
 
         <p className="mt-5 text-sm text-stone">
+          <button onClick={() => setFindIdOpen(true)} className="hover:text-gold-deep">
+            아이디 찾기
+          </button>
+          <span className="mx-2 text-line">|</span>
+          <button onClick={() => setFindPwOpen(true)} className="hover:text-gold-deep">
+            비밀번호 찾기
+          </button>
+        </p>
+        <p className="mt-2 text-sm text-stone">
           아직 계정이 없으신가요?{" "}
           <Link href="/signup" className="font-semibold text-gold-deep">
             회원가입
           </Link>
         </p>
       </div>
+
+      {findIdOpen && <FindIdModal onClose={() => setFindIdOpen(false)} />}
+      {findPwOpen && <FindPasswordModal onClose={() => setFindPwOpen(false)} />}
     </section>
   );
 }

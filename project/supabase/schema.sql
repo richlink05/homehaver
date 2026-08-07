@@ -14,6 +14,7 @@ create table profiles (
   company_name text,
   is_approved boolean not null default false,
   points integer not null default 0,
+  banned boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -207,17 +208,18 @@ alter table reviews enable row level security;
 
 -- 누구나 승인된 매물 조회 가능
 create policy "listings_public_read" on listings
-  for select using (is_approved = true or agency_id = auth.uid());
+  for select using (is_approved = true or agency_id = auth.uid() or registrant_id = auth.uid());
 
--- 분양관계자 본인 매물만 등록/수정 (관리자 승인이 완료된 담당자만 등록 가능)
+-- 분양관계자 본인 매물만 등록 가능 (관리자 승인이 완료된 담당자만 등록 가능). 등록 시점엔
+-- 담당자(agency_id)가 아직 배정되지 않으므로 registrant_id 기준으로 확인합니다.
 create policy "listings_agency_insert" on listings
   for insert with check (
-    auth.uid() = agency_id
+    auth.uid() = registrant_id
     and exists (select 1 from profiles p where p.id = auth.uid() and p.is_approved = true)
   );
 
 create policy "listings_agency_update" on listings
-  for update using (auth.uid() = agency_id);
+  for update using (auth.uid() = agency_id or (agency_id is null and auth.uid() = registrant_id));
 
 -- 시공사/지역은 누구나 조회 가능, 로그인한 사용자는 새 시공사를 등록(upsert) 가능
 create policy "builders_public_read" on builders for select using (true);
@@ -312,11 +314,483 @@ grant insert on inquiries to anon;
 grant execute on all functions in schema public to anon, authenticated;
 
 -- ============================================================
+-- 담당자 활성화 / 1인 1현장 / 대기열 / 매일 포인트 차감
+-- ============================================================
+-- listings.agency_id는 "현재 담당자"를 의미하며 대기열 인계에 따라 바뀔 수 있습니다.
+-- registrant_id는 "최초 등록자"로 한 번 정해지면 바뀌지 않습니다(등록/승인 이력 확인용).
+alter table listings add column if not exists registrant_id uuid references profiles(id);
+alter table listings add column if not exists tenure_start timestamptz;
+alter table listings add column if not exists last_deduction_date date;
+update listings set registrant_id = agency_id where registrant_id is null;
+
+create table if not exists listing_waitlist (
+  id uuid primary key default uuid_generate_v4(),
+  listing_id uuid references listings(id) on delete cascade,
+  user_id uuid references profiles(id) on delete cascade,
+  requested_at timestamptz not null default now(),
+  unique (listing_id, user_id)
+);
+create index if not exists idx_waitlist_listing on listing_waitlist (listing_id, requested_at);
+
+alter table listing_waitlist enable row level security;
+create policy "waitlist_select" on listing_waitlist
+  for select using (
+    auth.uid() = user_id
+    or exists (select 1 from listings l where l.id = listing_id and l.agency_id = auth.uid())
+    or is_admin()
+  );
+
+-- 대기자 → 현재 담당자로 인계(또는 대기자가 없으면 담당자 미배정 처리)하는 내부 함수입니다.
+-- authenticated/anon에는 실행 권한을 주지 않아 클라이언트에서 직접 호출할 수 없고,
+-- 아래 stop_managing()/process_daily_deductions() 안에서만 호출됩니다.
+create or replace function handoff_listing(p_listing_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  next_row record;
+begin
+  loop
+    select * into next_row from listing_waitlist
+      where listing_id = p_listing_id
+      order by requested_at asc
+      limit 1;
+
+    if next_row is null then
+      update listings set agency_id = null, tenure_start = null, last_deduction_date = null
+        where id = p_listing_id;
+      return;
+    end if;
+
+    delete from listing_waitlist where id = next_row.id;
+
+    if coalesce((select points from profiles where id = next_row.user_id), 0) >= 15000 then
+      update listings set agency_id = next_row.user_id, tenure_start = null, last_deduction_date = null
+        where id = p_listing_id;
+      return;
+    end if;
+    -- 포인트 부족한 대기자는 자동으로 건너뛰고 다음 대기자를 확인합니다.
+  end loop;
+end;
+$$;
+
+create or replace function activate_manager(p_listing_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_approved boolean;
+  v_current_manager uuid;
+  v_points integer;
+  v_title text;
+begin
+  if auth.uid() is null then raise exception '로그인이 필요합니다.'; end if;
+
+  select is_approved, agency_id, title into v_approved, v_current_manager, v_title
+    from listings where id = p_listing_id;
+  if v_approved is not true then raise exception '승인되지 않은 현장입니다.'; end if;
+  if v_current_manager is not null and v_current_manager != auth.uid() then
+    raise exception '이미 다른 담당자가 활동중인 현장입니다.';
+  end if;
+
+  if exists (select 1 from listings where agency_id = auth.uid() and id != p_listing_id) then
+    raise exception '이미 다른 현장을 담당중입니다. 한 분당 하나의 현장만 담당할 수 있습니다.';
+  end if;
+
+  select points into v_points from profiles where id = auth.uid();
+  if coalesce(v_points, 0) < 15000 then
+    raise exception '담당자로 활성화하려면 최소 15,000P가 필요합니다.';
+  end if;
+
+  perform add_points(-15000, '사용', format('"%s" 노출 (1일차)', v_title));
+
+  update listings set agency_id = auth.uid(), tenure_start = now(), last_deduction_date = current_date
+    where id = p_listing_id;
+end;
+$$;
+
+create or replace function join_waitlist(p_listing_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_points integer;
+begin
+  if auth.uid() is null then raise exception '로그인이 필요합니다.'; end if;
+
+  if exists (select 1 from listings where agency_id = auth.uid()) then
+    raise exception '이미 다른 현장을 담당중입니다. 한 분당 하나의 현장만 담당할 수 있습니다.';
+  end if;
+
+  select points into v_points from profiles where id = auth.uid();
+  if coalesce(v_points, 0) < 15000 then
+    raise exception '대기자로 등록하려면 최소 15,000P가 필요합니다.';
+  end if;
+
+  if exists (select 1 from listing_waitlist where listing_id = p_listing_id and user_id = auth.uid()) then
+    raise exception '이미 이 현장의 대기자로 등록되어 있습니다.';
+  end if;
+
+  insert into listing_waitlist (listing_id, user_id) values (p_listing_id, auth.uid());
+end;
+$$;
+
+create or replace function stop_managing(p_listing_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then raise exception '로그인이 필요합니다.'; end if;
+  if not exists (select 1 from listings where id = p_listing_id and agency_id = auth.uid()) then
+    raise exception '이 현장의 담당자가 아닙니다.';
+  end if;
+  perform handoff_listing(p_listing_id);
+end;
+$$;
+
+-- 담당자별로 하루 15,000P씩 차감합니다(마지막 차감일 다음날부터 오늘까지 순차 적용).
+-- 포인트가 부족해지면 그 시점에 handoff_listing()으로 자동 인계합니다.
+create or replace function process_daily_deductions()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  l record;
+  v_points integer;
+  v_new_balance integer;
+  guard int;
+begin
+  for l in
+    select id, agency_id, last_deduction_date, title
+    from listings
+    where agency_id is not null and is_approved = true and last_deduction_date is not null
+  loop
+    guard := 0;
+    while l.last_deduction_date < current_date and guard < 60 loop
+      guard := guard + 1;
+      select points into v_points from profiles where id = l.agency_id;
+
+      if coalesce(v_points, 0) >= 15000 then
+        update profiles set points = points - 15000 where id = l.agency_id returning points into v_new_balance;
+        l.last_deduction_date := l.last_deduction_date + 1;
+        insert into point_transactions (user_id, type, amount, note, balance_after)
+          values (l.agency_id, '사용', -15000, format('"%s" 노출 (%s)', l.title, l.last_deduction_date), v_new_balance);
+        update listings set last_deduction_date = l.last_deduction_date where id = l.id;
+      else
+        perform handoff_listing(l.id);
+        exit;
+      end if;
+    end loop;
+  end loop;
+end;
+$$;
+
+grant execute on function activate_manager(uuid) to authenticated;
+grant execute on function join_waitlist(uuid) to authenticated;
+grant execute on function stop_managing(uuid) to authenticated;
+grant execute on function process_daily_deductions() to authenticated;
+-- handoff_listing()은 authenticated에 권한을 주지 않아 클라이언트에서 직접 호출할 수 없습니다
+-- (다른 담당자를 강제로 쫓아내는 데 악용될 수 있어, 위 함수들 내부에서만 쓰이도록 제한합니다).
+
+-- ============================================================
+-- 커뮤니티 게시판
+-- ============================================================
+create table community_posts (
+  id uuid primary key default uuid_generate_v4(),
+  category text not null check (category in ('free','review','qna','notice')),
+  title text not null,
+  content text not null,
+  author text not null,
+  password text not null, -- 데모 수준 평문 저장입니다. 실서비스 전환 시 해시 처리가 필요합니다.
+  image_url text,
+  views int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table community_comments (
+  id uuid primary key default uuid_generate_v4(),
+  post_id uuid references community_posts(id) on delete cascade,
+  author text not null,
+  content text not null,
+  created_at timestamptz not null default now()
+);
+
+create table community_reports (
+  id uuid primary key default uuid_generate_v4(),
+  post_id uuid references community_posts(id) on delete cascade,
+  post_title text not null,
+  post_author text not null,
+  reason text not null,
+  detail text,
+  evidence_url text,
+  status text not null default '대기' check (status in ('대기','처리완료','반려')),
+  created_at timestamptz not null default now()
+);
+
+create table banned_keywords (
+  id uuid primary key default uuid_generate_v4(),
+  keyword text not null unique,
+  created_at timestamptz not null default now()
+);
+
+create table blocked_authors (
+  id uuid primary key default uuid_generate_v4(),
+  author_name text not null unique,
+  blocked_at timestamptz not null default now()
+);
+
+create index idx_community_comments_post on community_comments (post_id, created_at);
+
+alter table community_posts enable row level security;
+alter table community_comments enable row level security;
+alter table community_reports enable row level security;
+alter table banned_keywords enable row level security;
+alter table blocked_authors enable row level security;
+
+-- 게시글/댓글/차단목록/금지어 목록은 누구나 볼 수 있고, 쓰기는 아래 함수를 통해서만 합니다.
+create policy "community_posts_public_read" on community_posts for select using (true);
+create policy "community_comments_public_read" on community_comments for select using (true);
+create policy "banned_keywords_public_read" on banned_keywords for select using (true);
+create policy "blocked_authors_public_read" on blocked_authors for select using (true);
+create policy "community_reports_admin_select" on community_reports for select using (is_admin());
+create policy "community_reports_public_insert" on community_reports for insert with check (true);
+
+create policy "banned_keywords_admin_write" on banned_keywords for all using (is_admin());
+create policy "blocked_authors_admin_write" on blocked_authors for all using (is_admin());
+create policy "community_reports_admin_update" on community_reports for update using (is_admin());
+
+-- 게시글 작성: 비회원 포함 누구나 가능하지만, 금지 키워드/차단된 작성자는 걸러내고
+-- 공지사항(notice)은 관리자만 쓸 수 있게 합니다.
+create or replace function create_post(
+  p_category text, p_title text, p_content text, p_author text, p_password text, p_image_url text
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  new_id uuid;
+  hit text;
+begin
+  if exists (select 1 from blocked_authors where author_name = p_author) then
+    raise exception '이용이 제한된 사용자입니다.';
+  end if;
+  if p_category = 'notice' and not is_admin() then
+    raise exception '공지사항은 관리자만 작성할 수 있습니다.';
+  end if;
+
+  select keyword into hit from banned_keywords
+    where position(lower(keyword) in lower(p_title || ' ' || p_content)) > 0
+    limit 1;
+  if hit is not null then
+    raise exception '게시할 수 없는 단어("%")가 포함되어 있습니다.', hit;
+  end if;
+
+  insert into community_posts (category, title, content, author, password, image_url)
+    values (p_category, p_title, p_content, p_author, p_password, p_image_url)
+    returning id into new_id;
+
+  return new_id;
+end;
+$$;
+
+create or replace function update_post(
+  p_post_id uuid, p_password text, p_category text, p_title text, p_content text, p_image_url text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not is_admin() and not exists (
+    select 1 from community_posts where id = p_post_id and password = p_password
+  ) then
+    raise exception '비밀번호가 일치하지 않습니다.';
+  end if;
+
+  update community_posts
+    set category = p_category, title = p_title, content = p_content, image_url = p_image_url
+    where id = p_post_id;
+end;
+$$;
+
+create or replace function delete_post(p_post_id uuid, p_password text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not is_admin() and not exists (
+    select 1 from community_posts where id = p_post_id and password = p_password
+  ) then
+    raise exception '비밀번호가 일치하지 않습니다.';
+  end if;
+  delete from community_posts where id = p_post_id;
+end;
+$$;
+
+create or replace function admin_delete_post(p_post_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not is_admin() then raise exception '관리자 권한이 필요합니다.'; end if;
+  delete from community_posts where id = p_post_id;
+end;
+$$;
+
+create or replace function create_comment(p_post_id uuid, p_author text, p_content text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  new_id uuid;
+  hit text;
+begin
+  if exists (select 1 from blocked_authors where author_name = p_author) then
+    raise exception '이용이 제한된 사용자입니다.';
+  end if;
+
+  select keyword into hit from banned_keywords
+    where position(lower(keyword) in lower(p_content)) > 0
+    limit 1;
+  if hit is not null then
+    raise exception '게시할 수 없는 단어("%")가 포함되어 있습니다.', hit;
+  end if;
+
+  insert into community_comments (post_id, author, content) values (p_post_id, p_author, p_content)
+    returning id into new_id;
+  return new_id;
+end;
+$$;
+
+create or replace function increment_post_views(p_post_id uuid)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update community_posts set views = views + 1 where id = p_post_id;
+$$;
+
+-- 신고를 검토해 처리(글 삭제 + 작성자 차단)하거나 반려합니다. 관리자만 호출 가능합니다.
+create or replace function resolve_report(p_report_id uuid, p_action text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r record;
+begin
+  if not is_admin() then raise exception '관리자 권한이 필요합니다.'; end if;
+
+  select * into r from community_reports where id = p_report_id;
+  if r is null then raise exception '신고 내역을 찾을 수 없습니다.'; end if;
+
+  if p_action = 'delete_post' then
+    delete from community_posts where id = r.post_id;
+  elsif p_action = 'block_author' then
+    insert into blocked_authors (author_name) values (r.post_author) on conflict do nothing;
+    delete from community_posts where id = r.post_id;
+    -- 이름이 일치하는 분양담당자 계정이 정확히 1명이면 함께 활동금지 처리하고,
+    -- 담당중인 현장이 있으면 대기자에게 인계(또는 미배정 전환)합니다.
+    if (select count(*) from profiles where role = 'agency' and name = r.post_author) = 1 then
+      declare
+        v_banned_id uuid;
+        v_listing_id uuid;
+      begin
+        select id into v_banned_id from profiles where role = 'agency' and name = r.post_author;
+        update profiles set banned = true where id = v_banned_id;
+        for v_listing_id in select id from listings where agency_id = v_banned_id loop
+          perform handoff_listing(v_listing_id);
+        end loop;
+      end;
+    end if;
+  elsif p_action = 'dismiss' then
+    null;
+  else
+    raise exception '알 수 없는 처리 유형입니다.';
+  end if;
+
+  update community_reports
+    set status = case when p_action = 'dismiss' then '반려' else '처리완료' end
+    where id = p_report_id;
+end;
+$$;
+
+grant execute on function create_post(text,text,text,text,text,text) to anon, authenticated;
+grant execute on function update_post(uuid,text,text,text,text,text) to anon, authenticated;
+grant execute on function delete_post(uuid,text) to anon, authenticated;
+grant execute on function create_comment(uuid,text,text) to anon, authenticated;
+grant execute on function increment_post_views(uuid) to anon, authenticated;
+grant execute on function admin_delete_post(uuid) to authenticated;
+grant execute on function resolve_report(uuid,text) to authenticated;
+
+-- ============================================================
+-- 아이디(이메일) 찾기 — 비회원도 호출해야 하므로 RLS를 우회하는 함수로 제공합니다.
+-- ============================================================
+create or replace function find_email_by_name_phone(p_name text, p_phone text)
+returns text
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select email from profiles where name = p_name and phone = p_phone limit 1;
+$$;
+
+grant execute on function find_email_by_name_phone(text, text) to anon, authenticated;
+
+-- ============================================================
+-- 검색어 통계
+-- ============================================================
+create table search_log (
+  id uuid primary key default uuid_generate_v4(),
+  term text not null,
+  created_at timestamptz not null default now()
+);
+create index idx_search_log_created on search_log (created_at desc);
+
+alter table search_log enable row level security;
+create policy "search_log_admin_select" on search_log for select using (is_admin());
+create policy "search_log_public_insert" on search_log for insert with check (true);
+
+grant insert on search_log to anon;
+
+-- ============================================================
 -- Storage (분양 이미지 업로드)
 -- ============================================================
 insert into storage.buckets (id, name, public)
 values ('listing-images', 'listing-images', true)
 on conflict (id) do nothing;
+
+insert into storage.buckets (id, name, public)
+values ('community-images', 'community-images', true)
+on conflict (id) do nothing;
+
+create policy "community_images_public_read" on storage.objects
+  for select using (bucket_id = 'community-images');
+
+create policy "community_images_public_upload" on storage.objects
+  for insert with check (bucket_id = 'community-images');
 
 create policy "listing_images_public_read" on storage.objects
   for select using (bucket_id = 'listing-images');

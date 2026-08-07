@@ -18,10 +18,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ data: null, error: "관리자 권한이 필요합니다." }, { status: 403 });
   }
 
-  const { role, is_approved } = await req.json();
+  const { role, is_approved, banned } = await req.json();
   const updatePayload: Record<string, unknown> = {};
   if (role !== undefined) updatePayload.role = role;
   if (is_approved !== undefined) updatePayload.is_approved = is_approved;
+  if (banned !== undefined) updatePayload.banned = banned;
 
   // ⚠️ update() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
   const { data, error } = await (supabase.from("profiles") as any)

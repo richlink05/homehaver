@@ -29,6 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               Rich<span className="text-gold">Link</span>
             </Link>
             <nav className="flex items-center gap-7 text-sm">
+              <Link href="/community">커뮤니티</Link>
               <HeaderNav isLoggedIn={!!user} role={profile?.role} />
               <Link
                 href="/listings/new"

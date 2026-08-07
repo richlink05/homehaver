@@ -23,6 +23,7 @@ export interface Database {
           company_name: string | null;
           is_approved: boolean;
           points: number;
+          banned: boolean;
           created_at: string;
         };
         Insert: {
@@ -34,6 +35,7 @@ export interface Database {
           company_name?: string | null;
           is_approved?: boolean;
           points?: number;
+          banned?: boolean;
           created_at?: string;
         };
         Update: {
@@ -45,6 +47,7 @@ export interface Database {
           company_name?: string | null;
           is_approved?: boolean;
           points?: number;
+          banned?: boolean;
           created_at?: string;
         };
         Relationships: [];
@@ -103,6 +106,9 @@ export interface Database {
           unit_count: number | null;
           building_count: number | null;
           top_floor: number | null;
+          registrant_id: string | null;
+          tenure_start: string | null;
+          last_deduction_date: string | null;
           move_in_date: string | null;
           address: string | null;
           lat: number | null;
@@ -133,6 +139,9 @@ export interface Database {
           unit_count?: number | null;
           building_count?: number | null;
           top_floor?: number | null;
+          registrant_id?: string | null;
+          tenure_start?: string | null;
+          last_deduction_date?: string | null;
           move_in_date?: string | null;
           address?: string | null;
           lat?: number | null;
@@ -163,6 +172,9 @@ export interface Database {
           unit_count?: number | null;
           building_count?: number | null;
           top_floor?: number | null;
+          registrant_id?: string | null;
+          tenure_start?: string | null;
+          last_deduction_date?: string | null;
           move_in_date?: string | null;
           address?: string | null;
           lat?: number | null;
@@ -191,6 +203,42 @@ export interface Database {
             columns: ["builder_id"];
             isOneToOne: false;
             referencedRelation: "builders";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      listing_waitlist: {
+        Row: {
+          id: string;
+          listing_id: string;
+          user_id: string;
+          requested_at: string;
+        };
+        Insert: {
+          id?: string;
+          listing_id: string;
+          user_id: string;
+          requested_at?: string;
+        };
+        Update: {
+          id?: string;
+          listing_id?: string;
+          user_id?: string;
+          requested_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "listing_waitlist_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "listing_waitlist_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           }
         ];
@@ -372,6 +420,136 @@ export interface Database {
           }
         ];
       };
+      community_posts: {
+        Row: {
+          id: string;
+          category: "free" | "review" | "qna" | "notice";
+          title: string;
+          content: string;
+          author: string;
+          password: string;
+          image_url: string | null;
+          views: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          category: "free" | "review" | "qna" | "notice";
+          title: string;
+          content: string;
+          author: string;
+          password: string;
+          image_url?: string | null;
+          views?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          category?: "free" | "review" | "qna" | "notice";
+          title?: string;
+          content?: string;
+          author?: string;
+          password?: string;
+          image_url?: string | null;
+          views?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      community_comments: {
+        Row: {
+          id: string;
+          post_id: string;
+          author: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          author: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          post_id?: string;
+          author?: string;
+          content?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "community_comments_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "community_posts";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      community_reports: {
+        Row: {
+          id: string;
+          post_id: string | null;
+          post_title: string;
+          post_author: string;
+          reason: string;
+          detail: string | null;
+          evidence_url: string | null;
+          status: "대기" | "처리완료" | "반려";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id?: string | null;
+          post_title: string;
+          post_author: string;
+          reason: string;
+          detail?: string | null;
+          evidence_url?: string | null;
+          status?: "대기" | "처리완료" | "반려";
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          post_id?: string | null;
+          post_title?: string;
+          post_author?: string;
+          reason?: string;
+          detail?: string | null;
+          evidence_url?: string | null;
+          status?: "대기" | "처리완료" | "반려";
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "community_reports_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "community_posts";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      banned_keywords: {
+        Row: { id: string; keyword: string; created_at: string };
+        Insert: { id?: string; keyword: string; created_at?: string };
+        Update: { id?: string; keyword?: string; created_at?: string };
+        Relationships: [];
+      };
+      blocked_authors: {
+        Row: { id: string; author_name: string; blocked_at: string };
+        Insert: { id?: string; author_name: string; blocked_at?: string };
+        Update: { id?: string; author_name?: string; blocked_at?: string };
+        Relationships: [];
+      };
+      search_log: {
+        Row: { id: string; term: string; created_at: string };
+        Insert: { id?: string; term: string; created_at?: string };
+        Update: { id?: string; term?: string; created_at?: string };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -384,6 +562,68 @@ export interface Database {
       add_points: {
         Args: { p_amount: number; p_type: string; p_note: string };
         Returns: number;
+      };
+      activate_manager: {
+        Args: { p_listing_id: string };
+        Returns: void;
+      };
+      join_waitlist: {
+        Args: { p_listing_id: string };
+        Returns: void;
+      };
+      stop_managing: {
+        Args: { p_listing_id: string };
+        Returns: void;
+      };
+      process_daily_deductions: {
+        Args: Record<PropertyKey, never>;
+        Returns: void;
+      };
+      create_post: {
+        Args: {
+          p_category: string;
+          p_title: string;
+          p_content: string;
+          p_author: string;
+          p_password: string;
+          p_image_url: string | null;
+        };
+        Returns: string;
+      };
+      update_post: {
+        Args: {
+          p_post_id: string;
+          p_password: string;
+          p_category: string;
+          p_title: string;
+          p_content: string;
+          p_image_url: string | null;
+        };
+        Returns: void;
+      };
+      delete_post: {
+        Args: { p_post_id: string; p_password: string };
+        Returns: void;
+      };
+      admin_delete_post: {
+        Args: { p_post_id: string };
+        Returns: void;
+      };
+      create_comment: {
+        Args: { p_post_id: string; p_author: string; p_content: string };
+        Returns: string;
+      };
+      increment_post_views: {
+        Args: { p_post_id: string };
+        Returns: void;
+      };
+      resolve_report: {
+        Args: { p_report_id: string; p_action: string };
+        Returns: void;
+      };
+      find_email_by_name_phone: {
+        Args: { p_name: string; p_phone: string };
+        Returns: string;
       };
     };
     Enums: {

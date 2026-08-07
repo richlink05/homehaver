@@ -33,7 +33,16 @@ function toArray(v?: string | string[]) {
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const supabase = createClient();
+  // ⚠️ rpc() 인자 타입 추론 문제 우회 (increment_view_count와 동일한 이유)
+  (supabase.rpc as any)("process_daily_deductions").then();
   const { q = "", sort = "recommend", page = "1" } = searchParams;
+
+  // 검색어 통계 기록 (실제 검색어가 있을 때만)
+  if (q.trim()) {
+    // ⚠️ insert() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+    (supabase.from("search_log") as any).insert({ term: q.trim() }).then();
+  }
+
   const types = toArray(searchParams.type);
   const statuses = toArray(searchParams.status);
   const pageSize = 12;

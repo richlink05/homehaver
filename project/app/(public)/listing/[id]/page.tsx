@@ -12,11 +12,27 @@ export const dynamic = "force-dynamic";
 
 export default async function ListingDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
+  // ⚠️ rpc() 인자 타입 추론 문제 우회 (increment_view_count와 동일한 이유)
+  (supabase.rpc as any)("process_daily_deductions").then();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let viewerRole: string | null = null;
+  if (user) {
+    const { data: viewerProfile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single<{ role: string }>();
+    viewerRole = viewerProfile?.role ?? null;
+  }
 
   const { data: listing } = await supabase
     .from("listings")
     .select(
-      "*, listing_images(*), listing_units(*), builders(name, brand_name), regions(sido, sigungu, dong)"
+      "*, listing_images(*), listing_units(*), builders(name, brand_name), regions(sido, sigungu, dong), manager:profiles!listings_agency_id_fkey(name, phone), listing_waitlist(id)"
     )
     .eq("id", params.id)
     .single<Record<string, any>>();
@@ -103,7 +119,13 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             ]}
           />
 
-          <ManagerContact managerName={listing.manager_name} managerPhone={listing.manager_phone} />
+          <ManagerContact
+            listingId={listing.id}
+            managerName={listing.manager?.name ?? null}
+            managerPhone={listing.manager?.phone ?? null}
+            hasManager={!!listing.agency_id}
+            isAgencyViewer={viewerRole === "agency"}
+          />
         </div>
 
         <div id="consult">

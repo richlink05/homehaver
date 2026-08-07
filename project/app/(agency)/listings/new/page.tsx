@@ -109,6 +109,19 @@ export default function NewListingPage() {
       return;
     }
 
+    // 신규 등록은 최소 15,000P 이상 보유한 경우에만 가능합니다 (승인 후 담당자로 활성화할 때 필요).
+    const { data: myProfile } = await supabase
+      .from("profiles")
+      .select("points")
+      .eq("id", user.id)
+      .single<{ points: number }>();
+    if ((myProfile?.points ?? 0) < 15000) {
+      setSubmitError(
+        `분양등록은 최소 15,000P 이상 보유하신 경우에만 가능합니다. (현재 보유: ${(myProfile?.points ?? 0).toLocaleString("ko-KR")}P) 마이페이지 > 포인트관리에서 충전 후 다시 시도해주세요.`
+      );
+      return;
+    }
+
     // ⚠️ upsert()는 이 프로젝트의 postgrest-js 버전에서 입력값 타입 추론이 계속
     // 깨지는 문제가 있어(onConflict 옵션과 결합 시 never[]로 오추론), 이 호출만
     // 타입 추론을 우회합니다. 실제 컬럼(name, brand_name)은 그대로 전달됩니다.
@@ -133,7 +146,7 @@ export default function NewListingPage() {
     // ⚠️ insert()도 upsert()와 동일하게 이 프로젝트에서 입력값 타입 추론이 깨져 any로 우회합니다.
     const listingResult = (await (supabase.from("listings") as any)
       .insert({
-        agency_id: user.id,
+        registrant_id: user.id,
         title: values.title,
         type: values.type,
         status: values.status,

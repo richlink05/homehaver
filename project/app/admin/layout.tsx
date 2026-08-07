@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic";
 const NAV = [
   { href: "/admin/approvals", label: "분양 승인" },
   { href: "/admin/inquiries", label: "상담문의" },
+  { href: "/admin/community", label: "커뮤니티" },
+  { href: "/admin/search-stats", label: "검색어 통계" },
   { href: "/admin/users", label: "회원관리" },
   { href: "/admin/ads", label: "광고관리" },
   { href: "/admin/banners", label: "배너관리" },

@@ -15,6 +15,8 @@ const NAV_ITEMS_USER = [
 
 const NAV_ITEMS_AGENCY = [
   { label: "내가 등록한 현장", href: "/listings" },
+  { label: "내가 담당중인 현장", href: "/listings/managing" },
+  { label: "대기중인 현장", href: "/listings/waitlist" },
   { label: "상담문의", href: "/inquiries" },
   { label: "포인트관리", href: "/mypage/points" },
   { label: "프로필 설정", href: "/mypage/profile" },
