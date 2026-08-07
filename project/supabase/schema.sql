@@ -841,6 +841,18 @@ $$;
 grant execute on function increment_daily_visit() to anon, authenticated;
 
 -- ============================================================
+-- 포팅 과정에서 추가된 신규 테이블들에 대한 기본 접근 권한(GRANT) 재부여
+-- (grant ... on all tables in schema는 실행 시점에 "이미 있던" 테이블에만 적용되므로,
+--  그 이후 새로 만든 listing_waitlist/community_*/search_log/daily_visit_counts 등은
+--  RLS 정책은 있어도 이 기본 권한이 없어서 매번 "permission denied"가 났습니다.)
+-- 실제로 어떤 행을 볼 수 있는지는 각 테이블의 RLS 정책이 여전히 그대로 통제합니다.
+-- ============================================================
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant select on all tables in schema public to anon;
+grant insert on inquiries to anon;
+grant insert on search_log to anon;
+
+-- ============================================================
 -- 최초 관리자 계정 안내
 -- ============================================================
 -- 신규 가입자는 기본적으로 is_approved = false 상태입니다.
