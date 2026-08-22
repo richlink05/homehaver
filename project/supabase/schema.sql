@@ -507,7 +507,10 @@ $$;
 grant execute on function activate_manager(uuid) to authenticated;
 grant execute on function join_waitlist(uuid) to authenticated;
 grant execute on function stop_managing(uuid) to authenticated;
-grant execute on function process_daily_deductions() to authenticated;
+-- 검색/상세페이지는 비회원도 보는 페이지라, 여기서 트리거되는 매일 포인트 차감 함수는
+-- anon에게도 실행 권한이 있어야 합니다. 없으면 비회원이 볼 때 조용히 실패해서
+-- 매일 차감이 사실상 거의 안 일어나는 상태가 됩니다.
+grant execute on function process_daily_deductions() to authenticated, anon;
 -- handoff_listing()은 authenticated에 권한을 주지 않아 클라이언트에서 직접 호출할 수 없습니다
 -- (다른 담당자를 강제로 쫓아내는 데 악용될 수 있어, 위 함수들 내부에서만 쓰이도록 제한합니다).
 

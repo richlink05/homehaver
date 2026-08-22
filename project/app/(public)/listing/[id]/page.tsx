@@ -12,7 +12,9 @@ export const dynamic = "force-dynamic";
 export default async function ListingDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
   // ⚠️ rpc() 인자 타입 추론 문제 우회 (increment_view_count와 동일한 이유)
-  (supabase.rpc as any)("process_daily_deductions").then();
+  (supabase.rpc as any)("process_daily_deductions").then(({ error }: any) => {
+    if (error) console.error("포인트 일일 차감 실패:", error);
+  });
 
   const {
     data: { user },
