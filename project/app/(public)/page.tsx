@@ -1,24 +1,13 @@
 import { SearchBar } from "@/components/search/SearchBar";
-import { createClient } from "@/lib/supabase/server";
-import { BannerPopup } from "@/components/banner/BannerPopup";
 
 export const dynamic = "force-dynamic";
 
 
 const POPULAR_KEYWORDS = ["강남", "송도", "용인", "수원", "동탄", "부산", "세종"];
 
-export default async function HomePage() {
-  const supabase = createClient();
-  const { data: banners } = await supabase
-    .from("admin_banners")
-    .select("id, image_url, link_url")
-    .eq("is_active", true)
-    .order("sort_order")
-    .returns<{ id: string; image_url: string; link_url: string | null }[]>();
-
+export default function HomePage() {
   return (
     <section className="flex min-h-[calc(100vh-73px)] flex-col items-center justify-center px-6 pb-24 text-center">
-      <BannerPopup banners={banners ?? []} />
       <p className="mb-5 text-xs font-semibold tracking-[4px] text-gold-deep">
         RICHLINK · PREMIUM 분양 검색 플랫폼
       </p>
