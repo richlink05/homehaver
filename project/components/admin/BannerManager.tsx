@@ -1,7 +1,8 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 interface Banner {
   id: string;
@@ -11,21 +12,73 @@ interface Banner {
   is_active: boolean;
 }
 
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+const MAX_SIZE = 3 * 1024 * 1024;
+
 export function BannerManager({ banners }: { banners: Banner[] }) {
   const router = useRouter();
-  const [form, setForm] = useState({ image_url: "", link_url: "", sort_order: 0 });
+  const supabase = createClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [sortOrder, setSortOrder] = useState(0);
+  const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const handleFile = (f: File) => {
+    if (!ALLOWED_TYPES.includes(f.type)) {
+      setError("jpg 또는 png 파일만 업로드할 수 있습니다.");
+      return;
+    }
+    if (f.size > MAX_SIZE) {
+      setError("이미지는 3MB 이하만 업로드할 수 있습니다.");
+      return;
+    }
+    setError("");
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
+  };
+
   const handleCreate = async () => {
-    if (!form.image_url) return;
+    if (!file) {
+      setError("배너 이미지를 선택해주세요.");
+      return;
+    }
     setSubmitting(true);
-    await fetch("/api/admin/banners", {
+    setError("");
+
+    const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from("banner-images").upload(path, file);
+    if (uploadError) {
+      setSubmitting(false);
+      setError(`이미지 업로드 실패: ${uploadError.message}`);
+      return;
+    }
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("banner-images").getPublicUrl(path);
+
+    const res = await fetch("/api/admin/banners", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ image_url: publicUrl, link_url: linkUrl || null, sort_order: sortOrder }),
     });
-    setForm({ image_url: "", link_url: "", sort_order: 0 });
     setSubmitting(false);
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => null);
+      setError(json?.error ?? "배너 등록에 실패했습니다.");
+      return;
+    }
+
+    setFile(null);
+    setPreview(null);
+    setLinkUrl("");
+    setSortOrder(0);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     router.refresh();
   };
 
@@ -39,38 +92,57 @@ export function BannerManager({ banners }: { banners: Banner[] }) {
   };
 
   const remove = async (id: string) => {
+    if (!confirm("이 배너를 삭제하시겠습니까?")) return;
     await fetch(`/api/admin/banners/${id}`, { method: "DELETE" });
     router.refresh();
   };
 
   return (
     <div>
-      <div className="mb-7 grid grid-cols-[1fr_1fr_100px_auto] gap-3 rounded-lg border border-line bg-white p-4">
-        <input
-          placeholder="이미지 URL"
-          value={form.image_url}
-          onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-          className="rounded border border-line px-3 py-2 text-[13px] outline-none focus:border-gold"
-        />
-        <input
-          placeholder="연결 URL (선택)"
-          value={form.link_url}
-          onChange={(e) => setForm({ ...form, link_url: e.target.value })}
-          className="rounded border border-line px-3 py-2 text-[13px] outline-none focus:border-gold"
-        />
-        <input
-          type="number"
-          placeholder="순서"
-          value={form.sort_order}
-          onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })}
-          className="rounded border border-line px-3 py-2 text-[13px] outline-none focus:border-gold"
-        />
+      <div className="mb-7 rounded-lg border border-line bg-white p-5">
+        <div className="mb-3.5 flex flex-wrap items-start gap-4">
+          <div>
+            <label className="mb-1.5 block text-[12.5px] text-gray-600">배너 이미지 (jpg/png, 3MB 이하)</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png"
+              onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+              className="text-[13px]"
+            />
+            {preview && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={preview} alt="" className="mt-2.5 h-[90px] rounded border border-line object-cover" />
+            )}
+          </div>
+          <div className="flex-1">
+            <label className="mb-1.5 block text-[12.5px] text-gray-600">연결 URL (선택)</label>
+            <input
+              placeholder="https://..."
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              className="w-full rounded border border-line px-3 py-2 text-[13px] outline-none focus:border-gold"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-[12.5px] text-gray-600">노출 순서</label>
+            <input
+              type="number"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(Number(e.target.value))}
+              className="w-24 rounded border border-line px-3 py-2 text-[13px] outline-none focus:border-gold"
+            />
+          </div>
+        </div>
+
+        {error && <p className="mb-3 text-[12.5px] text-red-500">{error}</p>}
+
         <button
           onClick={handleCreate}
           disabled={submitting}
-          className="rounded bg-gold px-4 text-[13px] font-semibold text-white transition-colors hover:bg-gold-deep disabled:opacity-50"
+          className="rounded bg-gold px-5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-gold-deep disabled:opacity-50"
         >
-          배너 추가
+          {submitting ? "등록 중..." : "배너 추가"}
         </button>
       </div>
 
@@ -78,7 +150,7 @@ export function BannerManager({ banners }: { banners: Banner[] }) {
         <table className="w-full text-left text-[13.5px]">
           <thead className="border-b border-line bg-mist/60 text-xs text-stone">
             <tr>
-              <th className="px-5 py-3 font-medium">이미지 URL</th>
+              <th className="px-5 py-3 font-medium">미리보기</th>
               <th className="px-5 py-3 font-medium">연결 URL</th>
               <th className="px-5 py-3 font-medium">순서</th>
               <th className="px-5 py-3 font-medium">노출 상태</th>
@@ -88,7 +160,10 @@ export function BannerManager({ banners }: { banners: Banner[] }) {
           <tbody>
             {banners.map((b) => (
               <tr key={b.id} className="border-b border-line last:border-0 hover:bg-mist/30">
-                <td className="max-w-[220px] truncate px-5 py-3.5 text-gray-600">{b.image_url}</td>
+                <td className="px-5 py-3.5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={b.image_url} alt="" className="h-11 w-20 rounded border border-line object-cover" />
+                </td>
                 <td className="max-w-[180px] truncate px-5 py-3.5 text-gray-600">{b.link_url ?? "-"}</td>
                 <td className="px-5 py-3.5 text-gray-600">{b.sort_order}</td>
                 <td className="px-5 py-3.5">

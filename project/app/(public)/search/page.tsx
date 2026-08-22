@@ -4,6 +4,7 @@ import { SearchBar } from "@/components/search/SearchBar";
 import { ListingFilter } from "@/components/listing/ListingFilter";
 import { SortSelect } from "@/components/listing/SortSelect";
 import { ListingGrid } from "@/components/listing/ListingGrid";
+import { BannerPopup } from "@/components/banner/BannerPopup";
 
 export const dynamic = "force-dynamic";
 
@@ -64,8 +65,16 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const { data: listings, count } = await query;
 
+  const { data: banners } = await supabase
+    .from("admin_banners")
+    .select("id, image_url, link_url")
+    .eq("is_active", true)
+    .order("sort_order")
+    .returns<{ id: string; image_url: string; link_url: string | null }[]>();
+
   return (
     <section>
+      <BannerPopup banners={banners ?? []} />
       <div className="border-b border-line px-8 py-5">
         <div className="mx-auto max-w-[1240px]">
           <SearchBar initialValue={q} className="max-w-[560px]" />

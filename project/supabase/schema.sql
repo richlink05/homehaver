@@ -795,6 +795,22 @@ insert into storage.buckets (id, name, public)
 values ('community-images', 'community-images', true)
 on conflict (id) do nothing;
 
+insert into storage.buckets (id, name, public)
+values ('banner-images', 'banner-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "banner_images_public_read" on storage.objects;
+create policy "banner_images_public_read" on storage.objects
+  for select using (bucket_id = 'banner-images');
+
+drop policy if exists "banner_images_admin_upload" on storage.objects;
+create policy "banner_images_admin_upload" on storage.objects
+  for insert with check (bucket_id = 'banner-images' and is_admin());
+
+drop policy if exists "banner_images_admin_delete" on storage.objects;
+create policy "banner_images_admin_delete" on storage.objects
+  for delete using (bucket_id = 'banner-images' and is_admin());
+
 create policy "community_images_public_read" on storage.objects
   for select using (bucket_id = 'community-images');
 
