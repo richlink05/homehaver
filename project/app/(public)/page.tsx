@@ -1,8 +1,5 @@
 import { SearchBar } from "@/components/search/SearchBar";
 
-export const dynamic = "force-dynamic";
-
-
 const POPULAR_KEYWORDS = ["강남", "송도", "용인", "수원", "동탄", "부산", "세종"];
 
 export default function HomePage() {

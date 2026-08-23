@@ -41,7 +41,9 @@ export async function middleware(request: NextRequest) {
 
   if (isCountablePage && !request.cookies.get(todayKey)) {
     // ⚠️ rpc() 인자 타입 추론 문제 우회 (increment_view_count와 동일한 이유)
-    (supabase.rpc as any)("increment_daily_visit").then();
+    // fire-and-forget(.then())으로 두면 응답이 먼저 나가면서 서버리스 환경에서
+    // 중간에 실행이 끊길 수 있어(process_daily_deductions에서 겪은 것과 동일한 문제) await로 바꿨습니다.
+    await (supabase.rpc as any)("increment_daily_visit");
     response.cookies.set({
       name: todayKey,
       value: "1",

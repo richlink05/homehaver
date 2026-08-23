@@ -20,7 +20,7 @@ export default async function CommunityPostPage({ params }: { params: { id: stri
   const supabase = createClient();
 
   // ⚠️ rpc() 인자 타입 추론 문제 우회 (increment_view_count와 동일한 이유)
-  (supabase.rpc as any)("increment_post_views", { p_post_id: params.id }).then();
+  await (supabase.rpc as any)("increment_post_views", { p_post_id: params.id });
 
   type PostRow = {
     id: string;

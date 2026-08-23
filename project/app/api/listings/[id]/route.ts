@@ -16,9 +16,9 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({ data: null, error: "매물을 찾을 수 없습니다." }, { status: 404 });
   }
 
-  // 조회수 증가 (비동기, 응답을 기다리지 않음)
+  // 조회수 증가
   // ⚠️ rpc() 인자 타입 추론 문제 우회 (insert/update와 동일한 이유)
-  (supabase.rpc as any)("increment_view_count", { listing_id: params.id }).then();
+  await (supabase.rpc as any)("increment_view_count", { listing_id: params.id });
 
   return NextResponse.json({ data, error: null });
 }
