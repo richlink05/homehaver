@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
 import { ListingGallery } from "@/components/listing/ListingGallery";
 import { ListingInfoRow } from "@/components/listing/ListingInfoRow";
 import { ListingTabs } from "@/components/listing/ListingTabs";
@@ -167,8 +168,9 @@ function ImageTabGrid({
   return (
     <div className="grid grid-cols-2 gap-4">
       {images.map((img) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img key={img.id} src={img.image_url} alt="" className="w-full rounded-md border border-line object-cover" />
+        <div key={img.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-md border border-line">
+          <Image src={img.image_url} alt="" fill sizes="(max-width: 768px) 50vw, 400px" className="object-cover" />
+        </div>
       ))}
     </div>
   );

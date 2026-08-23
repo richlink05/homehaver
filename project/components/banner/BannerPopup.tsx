@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface Banner {
   id: string;
@@ -38,17 +39,20 @@ export function BannerPopup({ banners }: { banners: Banner[] }) {
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-5">
       <div className="w-full max-w-[420px] overflow-hidden rounded-lg bg-white shadow-xl">
         <div className="max-h-[70vh] overflow-y-auto">
-          {banners.map((b) =>
-            b.link_url ? (
+          {banners.map((b) => {
+            const img = (
+              <div key={b.id} className="relative h-[280px] w-full">
+                <Image src={b.image_url} alt="배너" fill sizes="420px" className="object-cover" />
+              </div>
+            );
+            return b.link_url ? (
               <a key={b.id} href={b.link_url} target="_blank" rel="noopener noreferrer">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={b.image_url} alt="배너" className="block h-[280px] w-full object-cover" />
+                {img}
               </a>
             ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={b.id} src={b.image_url} alt="배너" className="block h-[280px] w-full object-cover" />
-            )
-          )}
+              img
+            );
+          })}
         </div>
         <div className="flex items-center justify-between border-t border-line px-4 py-3">
           <label className="flex cursor-pointer items-center gap-1.5 text-[12.5px] text-gray-600">

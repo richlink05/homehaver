@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileRole } from "@/lib/supabase/get-profile";
@@ -89,8 +90,9 @@ export default async function CommunityPostPage({ params }: { params: { id: stri
         </div>
 
         {post.image_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.image_url} alt="" className="mb-5 w-full rounded-md border border-line object-cover" />
+          <div className="relative mb-5 aspect-[16/10] w-full overflow-hidden rounded-md border border-line">
+            <Image src={post.image_url} alt="" fill sizes="(max-width: 768px) 100vw, 720px" className="object-cover" />
+          </div>
         )}
 
         <div
