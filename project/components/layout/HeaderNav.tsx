@@ -21,12 +21,8 @@ export function HeaderNav({
   };
 
   if (!isLoggedIn) {
-    return (
-      <>
-        <Link href="/login">로그인</Link>
-        <Link href="/signup">회원가입</Link>
-      </>
-    );
+    // 일반 방문자에게는 로그인/회원가입이 필요 없어(분양담당자 전용 기능이라 별도로 안내함) 아무것도 보여주지 않습니다.
+    return null;
   }
 
   return (

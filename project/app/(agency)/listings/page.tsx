@@ -34,11 +34,19 @@ export default async function MyListingsPage() {
 
   return (
     <section className="mx-auto max-w-[960px] px-8 py-12">
-      <div className="mb-8">
-        <h1 className="mb-1.5 font-serif text-[22px] font-semibold">내가 등록한 현장</h1>
-        <p className="text-[13.5px] text-stone">
-          등록한 현장의 승인 상태를 확인할 수 있습니다. 승인이 완료된 현장은 담당자로 활성화해야 검색결과에 노출됩니다.
-        </p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="mb-1.5 font-serif text-[22px] font-semibold">내가 등록한 현장</h1>
+          <p className="text-[13.5px] text-stone">
+            등록한 현장의 승인 상태를 확인할 수 있습니다. 승인이 완료된 현장은 담당자로 활성화해야 검색결과에 노출됩니다.
+          </p>
+        </div>
+        <Link
+          href="/listings/new"
+          className="shrink-0 rounded-sm border border-ink px-4.5 py-2 text-[13px] transition-colors hover:bg-ink hover:text-white"
+        >
+          + 분양등록
+        </Link>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-line bg-white">

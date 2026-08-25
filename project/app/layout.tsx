@@ -31,12 +31,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <nav className="flex items-center gap-7 text-sm">
               <Link href="/community">커뮤니티</Link>
               <HeaderNav isLoggedIn={!!user} role={profile?.role} />
-              <Link
-                href="/listings/new"
-                className="rounded-sm border border-ink px-4.5 py-2 text-[13px] transition-colors hover:bg-ink hover:text-white"
-              >
-                분양등록
-              </Link>
             </nav>
           </div>
         </header>
