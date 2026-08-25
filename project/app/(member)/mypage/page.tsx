@@ -19,6 +19,7 @@ const NAV_ITEMS_AGENCY = [
   { label: "대기중인 현장", href: "/listings/waitlist" },
   { label: "상담문의", href: "/inquiries" },
   { label: "포인트관리", href: "/mypage/points" },
+  { label: "공지사항", href: "/mypage/notices" },
   { label: "프로필 설정", href: "/mypage/profile" },
 ];
 
