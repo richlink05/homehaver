@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { ListingGallery } from "@/components/listing/ListingGallery";
 import { ListingInfoRow } from "@/components/listing/ListingInfoRow";
 import { ListingTabs } from "@/components/listing/ListingTabs";
@@ -9,6 +10,34 @@ import { KakaoMap } from "@/components/map/KakaoMap";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const supabase = createClient();
+  const { data: listing } = await supabase
+    .from("listings")
+    .select("title, address, description, thumbnail_url")
+    .eq("id", params.id)
+    .single<{ title: string; address: string | null; description: string | null; thumbnail_url: string | null }>();
+
+  if (!listing) return { title: "매물을 찾을 수 없습니다" };
+
+  const description = listing.description?.slice(0, 100) ?? listing.address ?? "홈해버에서 분양정보를 확인하세요.";
+
+  return {
+    title: listing.title,
+    description,
+    openGraph: {
+      title: listing.title,
+      description,
+      images: listing.thumbnail_url ? [{ url: listing.thumbnail_url }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: listing.title,
+      description,
+      images: listing.thumbnail_url ? [listing.thumbnail_url] : undefined,
+    },
+  };
+}
 
 export default async function ListingDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();

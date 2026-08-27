@@ -9,8 +9,28 @@ export const dynamic = "force-dynamic";
 
 
 export const metadata: Metadata = {
-  title: "RichLink — 대한민국 분양의 모든 정보를 연결하다",
-  description: "대한민국 분양 전문 검색 플랫폼 RichLink",
+  metadataBase: new URL("https://homehaver.vercel.app"),
+  title: {
+    default: "홈해버 — 대한민국 분양의 모든 정보를 연결하다",
+    template: "%s | 홈해버",
+  },
+  description: "대한민국 분양 전문 검색 플랫폼 홈해버. 아파트·오피스텔 분양정보를 한눈에 확인하세요.",
+  openGraph: {
+    title: "홈해버 — 대한민국 분양의 모든 정보를 연결하다",
+    description: "대한민국 분양 전문 검색 플랫폼 홈해버. 아파트·오피스텔 분양정보를 한눈에 확인하세요.",
+    siteName: "홈해버",
+    locale: "ko_KR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "홈해버 — 대한민국 분양의 모든 정보를 연결하다",
+    description: "대한민국 분양 전문 검색 플랫폼 홈해버. 아파트·오피스텔 분양정보를 한눈에 확인하세요.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
