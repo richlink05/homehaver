@@ -90,8 +90,8 @@ export default function EditListingPage() {
       setValue("status", listing.status);
       setValue("address", listing.address ?? "");
       setValue("moveInDate", listing.move_in_date ? listing.move_in_date.slice(0, 7) : "");
-      setValue("priceMin", listing.price_min ? listing.price_min / 10000 : undefined);
-      setValue("priceMax", listing.price_max ? listing.price_max / 10000 : undefined);
+      setValue("priceMin", listing.price_min ? listing.price_min / 10000 : 0);
+      setValue("priceMax", listing.price_max ? listing.price_max / 10000 : 0);
       setValue("areaMin", listing.area_min ?? undefined);
       setValue("areaMax", listing.area_max ?? undefined);
       setValue("unitCount", listing.unit_count ?? undefined);
