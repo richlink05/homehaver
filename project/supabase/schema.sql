@@ -237,7 +237,7 @@ create policy "listing_images_owner_write" on listing_images
     exists (
       select 1 from listings l
       where l.id = listing_images.listing_id
-        and (l.agency_id = auth.uid() or l.registrant_id = auth.uid())
+        and (l.agency_id = auth.uid() or (l.agency_id is null and l.registrant_id = auth.uid()))
     )
   );
 

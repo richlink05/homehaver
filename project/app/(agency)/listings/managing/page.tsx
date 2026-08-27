@@ -72,7 +72,15 @@ export default async function ManagingListingsPage() {
                   )}
                 </td>
                 <td className="px-5 py-3.5 text-right">
-                  <ListingStatusActions listingId={l.id} action="stop_managing" />
+                  <div className="flex items-center justify-end gap-2">
+                    <Link
+                      href={`/listings/${l.id}/edit`}
+                      className="rounded border border-line px-3.5 py-1.5 text-xs text-gray-600 transition-colors hover:border-gold-deep hover:text-gold-deep"
+                    >
+                      수정
+                    </Link>
+                    <ListingStatusActions listingId={l.id} action="stop_managing" />
+                  </div>
                 </td>
               </tr>
             ))}
