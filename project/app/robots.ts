@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/mypage", "/api", "/listings/new", "/listings/managing", "/listings/waitlist"],
       },
     ],
-    sitemap: "https://homehaver.vercel.app/sitemap.xml",
+    sitemap: "https://www.homehaver.com/sitemap.xml",
   };
 }

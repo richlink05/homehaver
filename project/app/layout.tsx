@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://homehaver.vercel.app"),
+  metadataBase: new URL("https://www.homehaver.com"),
   title: {
     default: "홈해버 — 대한민국 분양의 모든 정보를 연결하다",
     template: "%s | 홈해버",

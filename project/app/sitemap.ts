@@ -10,14 +10,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .returns<{ id: string; updated_at: string }[]>();
 
   const staticPages: MetadataRoute.Sitemap = [
-    { url: "https://homehaver.vercel.app", changeFrequency: "daily", priority: 1 },
-    { url: "https://homehaver.vercel.app/search", changeFrequency: "hourly", priority: 0.9 },
-    { url: "https://homehaver.vercel.app/business", changeFrequency: "weekly", priority: 0.7 },
-    { url: "https://homehaver.vercel.app/community", changeFrequency: "daily", priority: 0.5 },
+    { url: "https://www.homehaver.com", changeFrequency: "daily", priority: 1 },
+    { url: "https://www.homehaver.com/search", changeFrequency: "hourly", priority: 0.9 },
+    { url: "https://www.homehaver.com/business", changeFrequency: "weekly", priority: 0.7 },
+    { url: "https://www.homehaver.com/community", changeFrequency: "daily", priority: 0.5 },
   ];
 
   const listingPages: MetadataRoute.Sitemap = (listings ?? []).map((l) => ({
-    url: `https://homehaver.vercel.app/listing/${l.id}`,
+    url: `https://www.homehaver.com/listing/${l.id}`,
     lastModified: l.updated_at,
     changeFrequency: "daily",
     priority: 0.8,
