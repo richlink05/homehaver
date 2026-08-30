@@ -21,17 +21,17 @@ export async function POST() {
     return NextResponse.json({ error: "카카오 REST API 키가 설정되지 않았습니다." }, { status: 500 });
   }
 
-  const { data: targets } = await supabase
+  const targetsRes = await supabase
     .from("listings")
     .select("id, address")
     .is("lat", null)
-    .not("address", "is", null)
-    .returns<{ id: string; address: string }[]>();
+    .not("address", "is", null);
+  const targets = (targetsRes.data ?? []) as { id: string; address: string }[];
 
   let success = 0;
   const failed: string[] = [];
 
-  for (const listing of targets ?? []) {
+  for (const listing of targets) {
     try {
       const res = await fetch(
         `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(listing.address)}`,
@@ -60,5 +60,5 @@ export async function POST() {
     }
   }
 
-  return NextResponse.json({ total: (targets ?? []).length, success, failed });
+  return NextResponse.json({ total: targets.length, success, failed });
 }
