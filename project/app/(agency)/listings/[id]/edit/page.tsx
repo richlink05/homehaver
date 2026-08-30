@@ -38,6 +38,7 @@ export default function EditListingPage() {
 
   const [zipcode, setZipcode] = useState("");
   const [roadAddress, setRoadAddress] = useState("");
+  const [originalAddress, setOriginalAddress] = useState("");
   const [addressDetail, setAddressDetail] = useState("");
   const [showAddressLayer, setShowAddressLayer] = useState(false);
   const [manualAddressMode, setManualAddressMode] = useState(true); // 기존 주소가 있으니 기본은 직접입력 모드로 노출
@@ -103,6 +104,7 @@ export default function EditListingPage() {
       setValue("managerPhone", listing.manager_phone ?? "");
       setValue("description", listing.description ?? "");
       setRoadAddress(listing.address ?? "");
+      setOriginalAddress(listing.address ?? "");
       setExistingImages(listing.listing_images ?? []);
 
       setLoading(false);
@@ -169,6 +171,27 @@ export default function EditListingPage() {
 
     const moveInDate = values.moveInDate ? `${values.moveInDate}-01` : null;
 
+    // 주소가 실제로 바뀐 경우에만 좌표를 다시 계산합니다 (안 바뀌었으면 기존 좌표 유지).
+    const addressChanged = values.address !== originalAddress;
+    let geoUpdate: { lat?: number | null; lng?: number | null } = {};
+    if (addressChanged) {
+      try {
+        const geoRes = await fetch("/api/geocode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: values.address }),
+        });
+        if (geoRes.ok) {
+          const geo = await geoRes.json();
+          geoUpdate = { lat: geo.lat, lng: geo.lng };
+        } else {
+          geoUpdate = { lat: null, lng: null };
+        }
+      } catch {
+        geoUpdate = { lat: null, lng: null };
+      }
+    }
+
     // ⚠️ update() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
     const { error } = await (supabase.from("listings") as any)
       .update({
@@ -176,6 +199,7 @@ export default function EditListingPage() {
         type: values.type,
         status: values.status,
         address: values.address,
+        ...geoUpdate,
         move_in_date: moveInDate,
         price_min: values.priceMin * 10000,
         price_max: values.priceMax * 10000,

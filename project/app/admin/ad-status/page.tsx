@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { AdminPageHeader } from "@/components/admin/AdminUI";
 import { WaitlistCount } from "@/components/admin/WaitlistCount";
+import { BackfillGeocodeButton } from "@/components/admin/BackfillGeocodeButton";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,8 @@ export default async function AdStatusPage() {
         title="광고내역"
         description="승인된 현장별 현재 담당자와 대기자 현황을 확인합니다. 담당자가 없는 현장은 영업 대상입니다."
       />
+
+      <BackfillGeocodeButton />
 
       <div className="overflow-hidden rounded-lg border border-line bg-white">
         <table className="w-full text-left text-[13.5px]">

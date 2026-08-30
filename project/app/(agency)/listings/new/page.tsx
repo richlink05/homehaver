@@ -138,6 +138,25 @@ export default function NewListingPage() {
     }
     const builder = builderResult.data;
 
+    // 주소를 좌표(위도/경도)로 변환합니다. 실패해도 등록 자체는 막지 않고,
+    // 좌표만 비워둔 채 진행합니다(나중에 관리자가 일괄 보정 가능).
+    let lat: number | null = null;
+    let lng: number | null = null;
+    try {
+      const geoRes = await fetch("/api/geocode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: values.address }),
+      });
+      if (geoRes.ok) {
+        const geo = await geoRes.json();
+        lat = geo.lat;
+        lng = geo.lng;
+      }
+    } catch {
+      // 좌표 변환 실패는 등록을 막을 정도로 치명적이지 않으므로 무시합니다.
+    }
+
     // <input type="month">는 "YYYY-MM" 형식이라, DB의 date 타입에 맞춰 1일자를 붙여줍니다.
     const moveInDate = values.moveInDate ? `${values.moveInDate}-01` : null;
 
@@ -151,6 +170,8 @@ export default function NewListingPage() {
         type: values.type,
         status: values.status,
         address: values.address,
+        lat,
+        lng,
         move_in_date: moveInDate,
         price_min: values.priceMin * 10000,
         price_max: values.priceMax * 10000,

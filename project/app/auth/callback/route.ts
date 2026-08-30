@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
  * Supabase 대시보드 설정 필요:
  *  - Authentication > URL Configuration > Redirect URLs 에
  *    `<사이트주소>/auth/callback` 을 등록해야 합니다.
- *    (예: http://localhost:3000/auth/callback, https://richlink.vercel.app/auth/callback)
+ *    (예: http://localhost:3000/auth/callback, https://www.homehaver.com/auth/callback)
  */
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url);
