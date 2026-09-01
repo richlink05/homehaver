@@ -97,7 +97,7 @@ export interface Database {
           region_id: string | null;
           builder_id: string | null;
           title: string;
-          type: "아파트" | "오피스텔";
+          type: "아파트" | "오피스텔" | "생활형숙박시설" | "지식산업센터" | "상가";
           status: "분양예정" | "분양중" | "마감";
           price_min: number | null;
           price_max: number | null;

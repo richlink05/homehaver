@@ -86,7 +86,7 @@ create table listings (
   region_id uuid references regions(id),
   builder_id uuid references builders(id),
   title text not null,
-  type text not null check (type in ('아파트','오피스텔')),
+  type text not null check (type in ('아파트','오피스텔','생활형숙박시설','지식산업센터','상가')),
   status text not null default '분양예정' check (status in ('분양예정','분양중','마감')),
   price_min numeric,
   price_max numeric,

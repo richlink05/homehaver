@@ -268,6 +268,9 @@ export default function EditListingPage() {
               <select {...register("type")} className="input">
                 <option value="아파트">아파트</option>
                 <option value="오피스텔">오피스텔</option>
+                <option value="생활형숙박시설">생활형숙박시설</option>
+                <option value="지식산업센터">지식산업센터</option>
+                <option value="상가">상가</option>
               </select>
             </Field>
             <Field label="분양상태">

@@ -3,9 +3,8 @@
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 const REGIONS = ["서울", "경기", "인천", "부산"];
-const TYPES = ["아파트", "오피스텔", "지식산업센터", "상가"];
-const STATUSES = ["분양예정", "분양중", "계약중"];
-const MOVE_IN_YEARS = ["2026", "2027", "2028+"];
+const TYPES = ["아파트", "오피스텔", "생활형숙박시설", "지식산업센터", "상가"];
+const STATUSES = ["분양예정", "분양중", "마감"];
 
 function FilterGroup({
   title,
@@ -54,7 +53,6 @@ export function ListingFilter() {
       <FilterGroup title="지역" options={REGIONS} paramKey="region" />
       <FilterGroup title="분양종류" options={TYPES} paramKey="type" />
       <FilterGroup title="분양상태" options={STATUSES} paramKey="status" />
-      <FilterGroup title="입주예정" options={MOVE_IN_YEARS} paramKey="moveIn" />
     </aside>
   );
 }

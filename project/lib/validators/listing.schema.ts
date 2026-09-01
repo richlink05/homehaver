@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const listingSchema = z.object({
   title: z.string().min(2, "분양명을 입력해주세요"),
-  type: z.enum(["아파트", "오피스텔"]),
+  type: z.enum(["아파트", "오피스텔", "생활형숙박시설", "지식산업센터", "상가"]),
   status: z.enum(["분양예정", "분양중", "마감"]),
   address: z.string().min(2, "주소를 입력해주세요"),
   moveInDate: z.string().optional(),

@@ -12,7 +12,6 @@ const BADGE_STYLES: Record<string, string> = {
   응답완료: "bg-gold/15 text-gold-deep",
   분양예정: "bg-mist text-gray-600",
   분양중: "bg-gold text-white",
-  계약중: "bg-ink text-white",
   마감: "bg-gray-200 text-gray-500",
   user: "bg-mist text-gray-600",
   agency: "bg-gold/15 text-gold-deep",
