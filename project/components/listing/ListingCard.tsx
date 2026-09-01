@@ -35,10 +35,10 @@ export function ListingCard({ listing }: { listing: Listing }) {
       className="group block overflow-hidden rounded-md border border-line bg-white transition-all duration-300 hover:-translate-y-1.5 hover:border-transparent hover:shadow-[0_18px_40px_rgba(17,17,17,0.10)]"
     >
       <div className="relative h-[180px] overflow-hidden bg-gradient-to-br from-[#EDE7D8] to-[#D9CBA3]">
-        <span className="absolute left-3 top-3 rounded-full bg-gold px-2.5 py-1 text-[11px] font-semibold text-white">
+        <span className="absolute left-3 top-3 z-10 rounded-full bg-gold px-2.5 py-1 text-[11px] font-semibold text-white">
           {listing.status}
         </span>
-        <span className="absolute right-3 top-3 rounded-full bg-ink/80 px-2.5 py-1 text-[11px] font-semibold text-white">
+        <span className="absolute right-3 top-3 z-10 rounded-full bg-ink/80 px-2.5 py-1 text-[11px] font-semibold text-white">
           {TYPE_LABEL[listing.type]}
         </span>
         {listing.thumbnail_url && (
