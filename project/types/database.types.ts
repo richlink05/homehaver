@@ -94,6 +94,7 @@ export interface Database {
         Row: {
           id: string;
           agency_id: string | null;
+          is_managed: boolean;
           region_id: string | null;
           builder_id: string | null;
           title: string;

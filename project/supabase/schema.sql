@@ -83,6 +83,9 @@ create table builders (
 create table listings (
   id uuid primary key default uuid_generate_v4(),
   agency_id uuid references profiles(id) on delete set null,
+  -- 검색결과에서 담당자 있는 현장을 먼저 보여주기 위한 계산 컬럼입니다.
+  -- agency_id가 바뀔 때마다 자동으로 true/false가 갱신됩니다.
+  is_managed boolean generated always as (agency_id is not null) stored,
   region_id uuid references regions(id),
   builder_id uuid references builders(id),
   title text not null,

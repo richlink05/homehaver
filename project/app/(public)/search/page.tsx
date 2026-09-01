@@ -58,6 +58,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const { column, ascending } = SORT_MAP[sort] ?? SORT_MAP.recommend;
   query = query
+    .order("is_managed", { ascending: false })
     .order(column, { ascending })
     .range((pageNum - 1) * pageSize, pageNum * pageSize - 1);
 
