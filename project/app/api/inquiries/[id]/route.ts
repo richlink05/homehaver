@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getProfileRole } from "@/lib/supabase/get-profile";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const supabase = createClient();
@@ -8,15 +9,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ data: null, error: "로그인이 필요합니다." }, { status: 401 });
 
-  // 이 문의가 내가 담당(등록)한 현장으로 접수된 것인지 확인
+  // 이 문의가 내가 담당(등록)한 현장으로 접수된 것인지, 또는 관리자인지 확인
   const { data: inquiry } = await supabase
     .from("inquiries")
     .select("id, listings(agency_id)")
     .eq("id", params.id)
     .single<{ id: string; listings: { agency_id: string | null } | null }>();
 
+  const profile = await getProfileRole(supabase, user.id);
   const ownerId = inquiry?.listings?.agency_id;
-  if (!inquiry || ownerId !== user.id) {
+  const isOwner = ownerId === user.id;
+  const isAdmin = profile?.role === "admin";
+
+  if (!inquiry || (!isOwner && !isAdmin)) {
     return NextResponse.json({ data: null, error: "권한이 없습니다." }, { status: 403 });
   }
 
