@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { MypageShell } from "@/components/mypage/MypageShell";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,12 @@ export default async function WaitlistPage() {
   if (!user) {
     redirect("/login");
   }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name, role")
+    .eq("id", user.id)
+    .single<{ name: string | null; role: "user" | "agency" | "admin" }>();
 
   type WaitlistRow = {
     id: string;
@@ -28,7 +35,7 @@ export default async function WaitlistPage() {
     .returns<WaitlistRow[]>();
 
   return (
-    <section className="mx-auto max-w-[900px] px-8 py-12">
+    <MypageShell role={profile?.role} name={profile?.name} activeHref="/listings/waitlist">
       <div className="mb-8">
         <h1 className="mb-1.5 font-serif text-[22px] font-semibold">대기중인 현장</h1>
         <p className="text-[13.5px] text-stone">
@@ -73,6 +80,6 @@ export default async function WaitlistPage() {
           </tbody>
         </table>
       </div>
-    </section>
+    </MypageShell>
   );
 }

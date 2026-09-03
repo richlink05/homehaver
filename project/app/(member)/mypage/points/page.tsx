@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ChargeModal } from "@/components/points/ChargeModal";
+import { MypageShell } from "@/components/mypage/MypageShell";
 
 export const dynamic = "force-dynamic";
 
@@ -16,9 +17,9 @@ export default async function PointsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("points")
+    .select("name, role, points")
     .eq("id", user.id)
-    .single<{ points: number }>();
+    .single<{ name: string | null; role: "user" | "agency" | "admin"; points: number }>();
 
   type PointTxRow = {
     id: string;
@@ -38,7 +39,7 @@ export default async function PointsPage() {
     .returns<PointTxRow[]>();
 
   return (
-    <section className="mx-auto max-w-[900px] px-8 py-12">
+    <MypageShell role={profile?.role} name={profile?.name} activeHref="/mypage/points">
       <div className="mb-7 flex items-center justify-between">
         <div>
           <h1 className="mb-1.5 font-serif text-[22px] font-semibold">포인트관리</h1>
@@ -107,6 +108,6 @@ export default async function PointsPage() {
           </tbody>
         </table>
       </div>
-    </section>
+    </MypageShell>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ListingStatusActions } from "@/components/listing/ListingStatusActions";
+import { MypageShell } from "@/components/mypage/MypageShell";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,12 @@ export default async function MyListingsPage() {
   if (!user) {
     redirect("/login");
   }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name, role")
+    .eq("id", user.id)
+    .single<{ name: string | null; role: "user" | "agency" | "admin" }>();
 
   type MyListingRow = {
     id: string;
@@ -33,7 +40,7 @@ export default async function MyListingsPage() {
     .returns<MyListingRow[]>();
 
   return (
-    <section className="mx-auto max-w-[960px] px-8 py-12">
+    <MypageShell role={profile?.role} name={profile?.name} activeHref="/listings">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <h1 className="mb-1.5 font-serif text-[22px] font-semibold">내가 등록한 현장</h1>
@@ -128,6 +135,6 @@ export default async function MyListingsPage() {
           </tbody>
         </table>
       </div>
-    </section>
+    </MypageShell>
   );
 }

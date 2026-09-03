@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { InquiryStatusToggle } from "@/components/agency/InquiryStatusToggle";
+import { MypageShell } from "@/components/mypage/MypageShell";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,12 @@ export default async function AgencyInquiriesPage({
   if (!user) {
     redirect("/login");
   }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name, role")
+    .eq("id", user.id)
+    .single<{ name: string | null; role: "user" | "agency" | "admin" }>();
 
   const filter = searchParams.filter ?? "pending";
 
@@ -43,7 +50,7 @@ export default async function AgencyInquiriesPage({
   const { data: inquiries } = await query.returns<AgencyInquiryRow[]>();
 
   return (
-    <section className="mx-auto max-w-[1100px] px-8 py-12">
+    <MypageShell role={profile?.role} name={profile?.name} activeHref="/inquiries">
       <div className="mb-7">
         <h1 className="mb-1.5 font-serif text-[22px] font-semibold">문의관리</h1>
         <p className="text-[13px] text-stone">내가 담당하는 현장으로 접수된 고객 상담 신청입니다.</p>
@@ -111,6 +118,6 @@ export default async function AgencyInquiriesPage({
           </tbody>
         </table>
       </div>
-    </section>
+    </MypageShell>
   );
 }
