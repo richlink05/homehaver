@@ -75,12 +75,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     <section>
       <BannerPopup banners={banners ?? []} />
       <div className="border-b border-line px-8 py-5">
-        <div className="mx-auto max-w-[1240px]">
+        <div className="mx-auto max-w-[1600px]">
           <SearchBar initialValue={q} className="max-w-[560px]" />
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-[1240px] grid-cols-[200px_1fr] gap-7 px-8 py-8 max-[860px]:grid-cols-1">
+      <div className="mx-auto grid max-w-[1600px] grid-cols-[200px_1fr] gap-7 px-8 py-8 max-[860px]:grid-cols-1">
         <Suspense fallback={null}>
           <ListingFilter />
         </Suspense>
