@@ -123,7 +123,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
         address={address}
       />
 
-      <div className="mx-auto grid max-w-[1600px] grid-cols-[1fr_340px] gap-14 px-8 py-12 max-[860px]:grid-cols-1">
+      <div className="mx-auto grid max-w-[1400px] grid-cols-[1fr_340px] gap-14 px-8 py-12 max-[860px]:grid-cols-1">
         <div>
           <ListingInfoRow
             area={areaRange}

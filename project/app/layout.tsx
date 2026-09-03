@@ -44,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="ko">
       <body className="bg-white text-ink">
         <header className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur">
-          <div className="mx-auto flex max-w-[1600px] items-center justify-between px-8 py-4.5">
+          <div className="mx-auto flex max-w-[1400px] items-center justify-between px-8 py-4.5">
             <Link href="/" className="font-serif text-xl font-semibold">
               Rich<span className="text-gold">Link</span>
             </Link>
@@ -57,7 +57,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {children}
 
         <footer className="border-t border-line bg-mist">
-          <div className="mx-auto max-w-[1600px] px-8 py-11">
+          <div className="mx-auto max-w-[1400px] px-8 py-11">
             <div className="mb-5 flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-5">
               <div className="font-serif text-lg font-semibold">
                 Rich<span className="text-gold">Link</span>

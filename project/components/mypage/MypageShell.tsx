@@ -31,7 +31,7 @@ export function MypageShell({
   const navItems = isAgency ? NAV_ITEMS_AGENCY : NAV_ITEMS_USER;
 
   return (
-    <section className="mx-auto grid max-w-[1600px] grid-cols-[220px_1fr] gap-12 px-8 py-12">
+    <section className="mx-auto grid max-w-[1400px] grid-cols-[220px_1fr] gap-12 px-8 py-12">
       <aside className="border-r border-line pr-6">
         <div className="mb-8">
           <div className="mb-3 h-14 w-14 rounded-full bg-gradient-to-br from-gold-soft to-gold" />

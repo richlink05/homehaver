@@ -11,7 +11,7 @@ export function ListingGrid({ listings }: { listings: Listing[] }) {
   }
 
   return (
-    <div className="grid grid-cols-4 gap-6 max-[1200px]:grid-cols-3 max-[860px]:grid-cols-2 max-[520px]:grid-cols-1">
+    <div className="grid grid-cols-3 gap-6 max-[860px]:grid-cols-2 max-[520px]:grid-cols-1">
       {listings.map((listing) => (
         <ListingCard key={listing.id} listing={listing} />
       ))}
