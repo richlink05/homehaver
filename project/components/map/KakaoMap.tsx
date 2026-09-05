@@ -12,17 +12,28 @@ declare global {
 export function KakaoMap({ lat, lng, title }: { lat: number | null; lng: number | null; title: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
 
   useEffect(() => {
     if (!scriptLoaded || !window.kakao || !containerRef.current || !lat || !lng) return;
 
-    window.kakao.maps.load(() => {
-      const center = new window.kakao.maps.LatLng(lat, lng);
-      const map = new window.kakao.maps.Map(containerRef.current, { center, level: 3 });
-      const marker = new window.kakao.maps.Marker({ position: center });
-      marker.setMap(map);
-    });
+    try {
+      window.kakao.maps.load(() => {
+        try {
+          const center = new window.kakao.maps.LatLng(lat, lng);
+          const map = new window.kakao.maps.Map(containerRef.current, { center, level: 3 });
+          const marker = new window.kakao.maps.Marker({ position: center });
+          marker.setMap(map);
+        } catch (e: any) {
+          console.error("카카오맵 초기화 실패:", e, { lat, lng });
+          setMapError(e?.message ?? "지도를 표시하는 중 오류가 발생했습니다.");
+        }
+      });
+    } catch (e: any) {
+      console.error("카카오맵 SDK 로드 실패:", e);
+      setMapError(e?.message ?? "지도 SDK를 불러오지 못했습니다.");
+    }
   }, [scriptLoaded, lat, lng]);
 
   if (!appKey) {
@@ -43,6 +54,18 @@ export function KakaoMap({ lat, lng, title }: { lat: number | null; lng: number 
     );
   }
 
+  if (mapError) {
+    return (
+      <div className="flex h-[280px] flex-col items-center justify-center gap-1.5 rounded-lg bg-mist text-center text-[13px] text-stone">
+        <span>지도를 불러오지 못했습니다.</span>
+        <span className="text-[11px] text-red-500">{mapError}</span>
+        <span className="text-[11px] text-gray-400">
+          좌표값: {lat}, {lng}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* autoload=false로 불러온 뒤 kakao.maps.load()로 직접 초기화 시점을 제어합니다. */}
@@ -50,6 +73,7 @@ export function KakaoMap({ lat, lng, title }: { lat: number | null; lng: number 
         src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false`}
         strategy="afterInteractive"
         onLoad={() => setScriptLoaded(true)}
+        onError={() => setMapError("지도 스크립트 로드에 실패했습니다. (도메인 등록 여부를 확인해주세요)")}
       />
       <div ref={containerRef} aria-label={`${title} 위치 지도`} className="h-[280px] w-full rounded-lg" />
     </>
