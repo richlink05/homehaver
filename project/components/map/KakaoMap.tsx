@@ -15,6 +15,15 @@ export function KakaoMap({ lat, lng, title }: { lat: number | null; lng: number 
   const [mapError, setMapError] = useState<string | null>(null);
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
 
+  // 다른 매물 상세페이지에서 이미 카카오맵 스크립트를 불러온 적이 있으면,
+  // 브라우저에 스크립트가 이미 로드되어 있어서 <Script>의 onLoad가 다시 안 뜁니다.
+  // 그래서 마운트 시점에 window.kakao가 이미 존재하는지 직접 확인합니다.
+  useEffect(() => {
+    if (window.kakao?.maps) {
+      setScriptLoaded(true);
+    }
+  }, []);
+
   useEffect(() => {
     if (!scriptLoaded || !window.kakao || !containerRef.current || !lat || !lng) return;
 
