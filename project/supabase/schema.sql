@@ -51,6 +51,9 @@ begin
     raise exception '알 수 없는 포인트 거래 유형입니다.';
   end if;
 
+  -- 위에서 만든 보호 트리거를 통과시키기 위한 신뢰 플래그(이 트랜잭션에서만 유효).
+  perform set_config('app.trusted_profile_update', 'true', true);
+
   update profiles set points = points + p_amount where id = auth.uid()
   returning points into new_balance;
 
@@ -493,6 +496,7 @@ begin
       select points into v_points from profiles where id = l.agency_id;
 
       if coalesce(v_points, 0) >= 15000 then
+        perform set_config('app.trusted_profile_update', 'true', true);
         update profiles set points = points - 15000 where id = l.agency_id returning points into v_new_balance;
         l.last_deduction_date := l.last_deduction_date + 1;
         insert into point_transactions (user_id, type, amount, note, balance_after)
@@ -873,6 +877,44 @@ grant select, insert, update, delete on all tables in schema public to authentic
 grant select on all tables in schema public to anon;
 grant insert on inquiries to anon;
 grant insert on search_log to anon;
+
+-- ============================================================
+-- 회원 스스로 role/points/is_approved/banned를 직접 수정하지 못하게 막는 안전장치
+-- (profiles_self_update 정책이 "본인 행"이라는 것만 확인하고 "어떤 칼럼"인지는
+--  안 가려서, 이론상 클라이언트가 직접 API를 조작하면 이 값들도 바뀔 수 있었습니다.)
+-- ============================================================
+create or replace function protect_profile_privileged_fields()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- 관리자가 수정하는 경우는 그대로 허용합니다(회원관리 화면 등).
+  if is_admin() then
+    return new;
+  end if;
+
+  -- add_points(), process_daily_deductions()처럼 정당한 시스템 로직이
+  -- 이 값들을 바꿀 때는 함수 안에서 먼저 이 트랜잭션 한정 플래그를 켜둡니다.
+  if current_setting('app.trusted_profile_update', true) = 'true' then
+    return new;
+  end if;
+
+  -- 그 외(본인이 직접 자기 프로필을 수정하는 경우)는 민감한 값들을 원래 값으로 되돌립니다.
+  new.role := old.role;
+  new.points := old.points;
+  new.is_approved := old.is_approved;
+  new.banned := old.banned;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_protect_privileged_fields on profiles;
+create trigger profiles_protect_privileged_fields
+before update on profiles
+for each row
+execute function protect_profile_privileged_fields();
 
 -- ============================================================
 -- 최초 관리자 계정 안내
