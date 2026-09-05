@@ -4,6 +4,7 @@ import { SearchBar } from "@/components/search/SearchBar";
 import { ListingFilter } from "@/components/listing/ListingFilter";
 import { SortSelect } from "@/components/listing/SortSelect";
 import { ListingGrid } from "@/components/listing/ListingGrid";
+import { SearchPagination } from "@/components/listing/SearchPagination";
 import { BannerPopup } from "@/components/banner/BannerPopup";
 
 export const dynamic = "force-dynamic";
@@ -95,6 +96,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             </Suspense>
           </div>
           <ListingGrid listings={(listings as any) ?? []} />
+          <SearchPagination
+            currentPage={pageNum}
+            totalPages={Math.max(1, Math.ceil((count ?? 0) / pageSize))}
+            searchParams={searchParams}
+          />
         </div>
       </div>
     </section>
