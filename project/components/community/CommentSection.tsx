@@ -59,24 +59,24 @@ export function CommentSection({
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div className="flex gap-1.5 sm:gap-2">
         <input
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
           placeholder="이름"
-          className="w-[110px] rounded border border-line px-3 py-2 text-[13px] outline-none focus:border-gold"
+          className="w-[64px] shrink-0 rounded border border-line px-2 py-2 text-[13px] outline-none focus:border-gold sm:w-[110px] sm:px-3"
         />
         <input
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="댓글을 입력하세요"
-          className="flex-1 rounded border border-line px-3 py-2 text-[13px] outline-none focus:border-gold"
+          className="min-w-0 flex-1 rounded border border-line px-3 py-2 text-[13px] outline-none focus:border-gold"
         />
         <button
           onClick={submit}
           disabled={loading}
-          className="rounded bg-ink px-5 text-[12.5px] font-semibold text-white disabled:opacity-60"
+          className="shrink-0 rounded bg-ink px-4 text-[12.5px] font-semibold text-white disabled:opacity-60 sm:px-5"
         >
           등록
         </button>

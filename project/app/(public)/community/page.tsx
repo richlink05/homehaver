@@ -69,7 +69,7 @@ export default async function CommunityPage({
         <WriteButton />
       </div>
 
-      <div className="mb-6 flex gap-2 border-b border-line pb-4">
+      <div className="mb-6 flex gap-2 overflow-x-auto border-b border-line pb-4">
         {[
           { key: "all", label: "전체" },
           { key: "notice", label: "공지사항" },
@@ -80,7 +80,7 @@ export default async function CommunityPage({
           <Link
             key={t.key}
             href={`/community?category=${t.key}`}
-            className={`rounded-full px-3.5 py-1.5 text-[12.5px] ${
+            className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12.5px] ${
               category === t.key ? "bg-ink text-white" : "border border-line text-gray-600"
             }`}
           >
