@@ -46,8 +46,8 @@ export default async function ManagingListingsPage() {
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-line bg-white">
-        <table className="w-full text-left text-[13.5px]">
+      <div className="overflow-x-auto rounded-lg border border-line bg-white">
+        <table className="w-full min-w-[640px] text-left text-[13.5px]">
           <thead className="border-b border-line bg-mist/60 text-xs text-stone">
             <tr>
               <th className="px-5 py-3 font-medium">분양명</th>

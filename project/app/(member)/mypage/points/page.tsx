@@ -62,8 +62,8 @@ export default async function PointsPage() {
       </div>
 
       <h4 className="mb-3.5 text-[14px] font-semibold">포인트 사용 · 충전 내역</h4>
-      <div className="overflow-hidden rounded-lg border border-line bg-white">
-        <table className="w-full text-left text-[13.5px]">
+      <div className="overflow-x-auto rounded-lg border border-line bg-white">
+        <table className="w-full min-w-[640px] text-left text-[13.5px]">
           <thead className="border-b border-line bg-mist/60 text-xs text-stone">
             <tr>
               <th className="px-5 py-3 font-medium">일자</th>

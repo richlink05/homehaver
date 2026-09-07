@@ -37,8 +37,8 @@ export default async function MyInquiriesPage() {
       <h2 className="mb-6 font-serif text-[22px] font-semibold">상담 신청 내역</h2>
 
       {inquiries && inquiries.length > 0 ? (
-        <div className="overflow-hidden rounded-lg border border-line bg-white">
-          <table className="w-full text-left text-[13.5px]">
+        <div className="overflow-x-auto rounded-lg border border-line bg-white">
+          <table className="w-full min-w-[640px] text-left text-[13.5px]">
             <thead className="border-b border-line bg-mist/60 text-xs text-stone">
               <tr>
                 <th className="px-5 py-3 font-medium">분양명</th>
