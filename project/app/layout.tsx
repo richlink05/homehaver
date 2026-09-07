@@ -66,6 +66,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <Link href="/search" className="hover:text-gold-deep">
                   전체 분양 검색
                 </Link>
+                <Link href="/terms" className="hover:text-gold-deep">
+                  이용약관
+                </Link>
+                <Link href="/privacy" className="font-semibold text-gray-700 hover:text-gold-deep">
+                  개인정보처리방침
+                </Link>
               </div>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] leading-relaxed text-stone">

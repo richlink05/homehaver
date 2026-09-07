@@ -14,6 +14,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: "https://www.homehaver.com/search", changeFrequency: "hourly", priority: 0.9 },
     { url: "https://www.homehaver.com/business", changeFrequency: "weekly", priority: 0.7 },
     { url: "https://www.homehaver.com/community", changeFrequency: "daily", priority: 0.5 },
+    { url: "https://www.homehaver.com/terms", changeFrequency: "yearly", priority: 0.2 },
+    { url: "https://www.homehaver.com/privacy", changeFrequency: "yearly", priority: 0.2 },
   ];
 
   const listingPages: MetadataRoute.Sitemap = (listings ?? []).map((l) => ({
