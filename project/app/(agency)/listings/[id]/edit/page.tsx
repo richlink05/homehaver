@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { listingSchema, type ListingInput } from "@/lib/validators/listing.schema";
 import { createClient } from "@/lib/supabase/client";
 import { ImageUploader, uploadListingImages, type UploadedFile } from "@/components/listing/ImageUploader";
+import { UnitTypeEditor, type UnitTypeRow } from "@/components/listing/UnitTypeEditor";
 
 declare global {
   interface Window {
@@ -34,6 +35,7 @@ export default function EditListingPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [existingImages, setExistingImages] = useState<ExistingImage[]>([]);
+  const [unitTypes, setUnitTypes] = useState<UnitTypeRow[]>([]);
   const [newImages, setNewImages] = useState<UploadedFile[]>([]);
 
   const [zipcode, setZipcode] = useState("");
@@ -67,7 +69,7 @@ export default function EditListingPage() {
       const { data: listing, error } = await supabase
         .from("listings")
         .select(
-          "*, builders(name, brand_name), listing_images(id, image_url, category)"
+          "*, builders(name, brand_name), listing_images(id, image_url, category), listing_units(id, unit_type, exclusive_area, room_count)"
         )
         .eq("id", params.id)
         .single<Record<string, any>>();
@@ -106,6 +108,13 @@ export default function EditListingPage() {
       setRoadAddress(listing.address ?? "");
       setOriginalAddress(listing.address ?? "");
       setExistingImages(listing.listing_images ?? []);
+      setUnitTypes(
+        (listing.listing_units ?? []).map((u: any) => ({
+          unitType: u.unit_type ?? "",
+          exclusiveArea: u.exclusive_area != null ? String(u.exclusive_area) : "",
+          roomCount: u.room_count != null ? String(u.room_count) : "",
+        }))
+      );
 
       setLoading(false);
     })();
@@ -224,6 +233,31 @@ export default function EditListingPage() {
       const { errors: imageErrors } = await uploadListingImages(params.id, newImages);
       if (imageErrors.length > 0) {
         setSubmitError(`현장 정보는 수정되었지만, 일부 이미지 업로드에 실패했습니다: ${imageErrors.join(" / ")}`);
+        setTimeout(() => router.push(`/listing/${params.id}`), 3500);
+        return;
+      }
+    }
+
+    // 타입별 정보는 기존 것을 지우고 현재 화면 상태로 다시 저장하는 단순한 방식으로 처리합니다.
+    const { error: deleteUnitsError } = await supabase.from("listing_units").delete().eq("listing_id", params.id);
+    if (deleteUnitsError) {
+      setSubmitError(`현장 정보는 수정되었지만, 타입별 정보 갱신에 실패했습니다: ${deleteUnitsError.message}`);
+      setTimeout(() => router.push(`/listing/${params.id}`), 3500);
+      return;
+    }
+    const validUnits = unitTypes.filter((u) => u.unitType.trim());
+    if (validUnits.length > 0) {
+      // ⚠️ insert() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+      const { error: insertUnitsError } = await (supabase.from("listing_units") as any).insert(
+        validUnits.map((u) => ({
+          listing_id: params.id,
+          unit_type: u.unitType.trim(),
+          exclusive_area: u.exclusiveArea ? parseFloat(u.exclusiveArea) : null,
+          room_count: u.roomCount ? parseInt(u.roomCount, 10) : null,
+        }))
+      );
+      if (insertUnitsError) {
+        setSubmitError(`현장 정보는 수정되었지만, 타입별 정보 저장에 실패했습니다: ${insertUnitsError.message}`);
         setTimeout(() => router.push(`/listing/${params.id}`), 3500);
         return;
       }
@@ -350,6 +384,12 @@ export default function EditListingPage() {
             <Field label="최고 층수" error={errors.topFloor?.message}>
               <input {...register("topFloor")} type="number" className="input" />
             </Field>
+          </FormSection>
+
+          <FormSection title="타입별 정보 (면적 · 방개수)">
+            <div className="col-span-2">
+              <UnitTypeEditor units={unitTypes} onChange={setUnitTypes} />
+            </div>
           </FormSection>
 
           <FormSection title="담당자 정보">

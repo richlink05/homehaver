@@ -142,6 +142,36 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             <InfoCard label="최고 층수" value={listing.top_floor ? `${listing.top_floor}층` : "-"} />
           </div>
 
+          {listing.listing_units?.length > 0 && (
+            <div className="mb-9">
+              <h5 className="mb-3.5 text-[15px] font-semibold">타입별 정보</h5>
+              <div className="overflow-x-auto rounded-lg border border-line">
+                <table className="w-full min-w-[420px] text-left text-[13.5px]">
+                  <thead className="border-b border-line bg-mist/60 text-xs text-stone">
+                    <tr>
+                      <th className="px-4 py-2.5 font-medium">타입</th>
+                      <th className="px-4 py-2.5 font-medium">전용면적</th>
+                      <th className="px-4 py-2.5 font-medium">방개수</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listing.listing_units.map((u: any) => (
+                      <tr key={u.id} className="border-b border-line last:border-0">
+                        <td className="px-4 py-2.5 font-medium">{u.unit_type}</td>
+                        <td className="px-4 py-2.5 text-gray-600">
+                          {u.exclusive_area ? `${u.exclusive_area}㎡` : "-"}
+                        </td>
+                        <td className="px-4 py-2.5 text-gray-600">
+                          {u.room_count ? `방 ${u.room_count}개` : "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           <ListingTabs
             tabs={[
               {

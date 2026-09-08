@@ -136,8 +136,25 @@ create table listing_units (
   unit_type text not null,
   exclusive_area numeric,
   supply_area numeric,
+  room_count integer,
   plan_image_url text
 );
+
+alter table listing_units enable row level security;
+
+drop policy if exists "listing_units_public_read" on listing_units;
+create policy "listing_units_public_read" on listing_units for select using (true);
+
+-- 이미지와 동일한 기준: 담당자가 배정된 이후엔 등록자가 아니라 현재 담당자만 수정 가능합니다.
+drop policy if exists "listing_units_owner_write" on listing_units;
+create policy "listing_units_owner_write" on listing_units
+  for all using (
+    exists (
+      select 1 from listings l
+      where l.id = listing_units.listing_id
+        and (l.agency_id = auth.uid() or (l.agency_id is null and l.registrant_id = auth.uid()))
+    )
+  );
 
 -- ---------- INQUIRIES / FAVORITES / REVIEWS / RECENT VIEWS ----------
 create table inquiries (

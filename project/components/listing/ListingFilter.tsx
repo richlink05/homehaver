@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 const REGIONS = ["서울", "경기", "인천", "부산"];
 const TYPES = ["아파트", "오피스텔", "생활형숙박시설", "지식산업센터", "상가"];
 const STATUSES = ["분양예정", "분양중", "마감"];
+const ROOM_COUNTS = ["1개", "2개", "3개", "4개 이상"];
 
 function FilterGroup({
   title,
@@ -54,7 +55,10 @@ export function ListingFilter() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const searchParams = useSearchParams();
   const activeCount =
-    searchParams.getAll("region").length + searchParams.getAll("type").length + searchParams.getAll("status").length;
+    searchParams.getAll("region").length +
+    searchParams.getAll("type").length +
+    searchParams.getAll("status").length +
+    searchParams.getAll("rooms").length;
 
   return (
     <>
@@ -84,6 +88,7 @@ export function ListingFilter() {
         <FilterGroup title="지역" options={REGIONS} paramKey="region" />
         <FilterGroup title="분양종류" options={TYPES} paramKey="type" />
         <FilterGroup title="분양상태" options={STATUSES} paramKey="status" />
+        <FilterGroup title="방개수" options={ROOM_COUNTS} paramKey="rooms" />
       </aside>
     </>
   );

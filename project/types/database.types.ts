@@ -276,6 +276,44 @@ export interface Database {
           }
         ];
       };
+      listing_units: {
+        Row: {
+          id: string;
+          listing_id: string | null;
+          unit_type: string;
+          exclusive_area: number | null;
+          supply_area: number | null;
+          room_count: number | null;
+          plan_image_url: string | null;
+        };
+        Insert: {
+          id?: string;
+          listing_id?: string | null;
+          unit_type: string;
+          exclusive_area?: number | null;
+          supply_area?: number | null;
+          room_count?: number | null;
+          plan_image_url?: string | null;
+        };
+        Update: {
+          id?: string;
+          listing_id?: string | null;
+          unit_type?: string;
+          exclusive_area?: number | null;
+          supply_area?: number | null;
+          room_count?: number | null;
+          plan_image_url?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "listing_units_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listings";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       inquiries: {
         Row: {
           id: string;

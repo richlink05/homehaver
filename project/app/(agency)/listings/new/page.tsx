@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { listingSchema, type ListingInput } from "@/lib/validators/listing.schema";
 import { createClient } from "@/lib/supabase/client";
 import { ImageUploader, uploadListingImages, type UploadedFile } from "@/components/listing/ImageUploader";
+import { UnitTypeEditor, type UnitTypeRow } from "@/components/listing/UnitTypeEditor";
 
 // Daum 우편번호 서비스가 window에 심어주는 전역 객체 타입
 declare global {
@@ -26,6 +27,7 @@ export default function NewListingPage() {
   const router = useRouter();
   const supabase = createClient();
   const [images, setImages] = useState<UploadedFile[]>([]);
+  const [unitTypes, setUnitTypes] = useState<UnitTypeRow[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [profile, setProfile] = useState<{ name: string; phone: string } | null>(null);
 
@@ -210,6 +212,26 @@ export default function NewListingPage() {
       }
     }
 
+    // 타입별 정보(면적/방개수)를 listing_units에 저장. 유효한 타입명이 있는 행만 저장합니다.
+    const validUnits = unitTypes.filter((u) => u.unitType.trim());
+    if (validUnits.length > 0) {
+      // ⚠️ insert() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
+      const { error: unitsError } = await (supabase.from("listing_units") as any).insert(
+        validUnits.map((u) => ({
+          listing_id: listing.id,
+          unit_type: u.unitType.trim(),
+          exclusive_area: u.exclusiveArea ? parseFloat(u.exclusiveArea) : null,
+          room_count: u.roomCount ? parseInt(u.roomCount, 10) : null,
+        }))
+      );
+      if (unitsError) {
+        console.error("타입별 정보 저장 실패:", unitsError);
+        setSubmitError(`현장 등록은 완료되었지만, 타입별 정보 저장에 실패했습니다: ${unitsError.message}`);
+        setTimeout(() => router.push(`/listing/${listing.id}`), 3500);
+        return;
+      }
+    }
+
     // "내가 등록한 현장" 목록 탭이 아직 없어서(포팅 예정), 방금 등록한 매물 상세로 이동합니다.
     // 승인 전이라도 본인이 등록한 매물은 본인 계정으로 조회할 수 있습니다.
     router.push(`/listing/${listing.id}`);
@@ -328,6 +350,12 @@ export default function NewListingPage() {
             <Field label="최고 층수" error={errors.topFloor?.message}>
               <input {...register("topFloor")} type="number" placeholder="35" className="input" />
             </Field>
+          </FormSection>
+
+          <FormSection title="타입별 정보 (면적 · 방개수)">
+            <div className="col-span-2">
+              <UnitTypeEditor units={unitTypes} onChange={setUnitTypes} />
+            </div>
           </FormSection>
 
           <FormSection title="담당자 정보">

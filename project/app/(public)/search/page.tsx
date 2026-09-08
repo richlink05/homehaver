@@ -16,6 +16,7 @@ interface SearchPageProps {
     region?: string | string[];
     type?: string | string[];
     status?: string | string[];
+    rooms?: string | string[];
     sort?: string;
     page?: string;
   };
@@ -45,6 +46,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const types = toArray(searchParams.type);
   const statuses = toArray(searchParams.status);
+  const rooms = toArray(searchParams.rooms);
   const pageSize = 12;
   const pageNum = Number(page);
 
@@ -56,6 +58,25 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   if (q) query = query.or(`title.ilike.%${q}%,address.ilike.%${q}%`);
   if (types.length) query = query.in("type", types);
   if (statuses.length) query = query.in("status", statuses);
+
+  // 방개수는 listing_units(별도 테이블)에 있어서, 조인 대신 먼저 조건에 맞는 listing_id들을 구해서 필터링합니다.
+  if (rooms.length) {
+    const exactCounts = rooms.filter((r) => r !== "4개 이상").map((r) => parseInt(r, 10));
+    const hasFourPlus = rooms.includes("4개 이상");
+
+    const unitQueries = [];
+    if (exactCounts.length > 0) {
+      unitQueries.push(supabase.from("listing_units").select("listing_id").in("room_count", exactCounts));
+    }
+    if (hasFourPlus) {
+      unitQueries.push(supabase.from("listing_units").select("listing_id").gte("room_count", 4));
+    }
+    const unitResults = await Promise.all(unitQueries);
+    const matchedIds = [
+      ...new Set(unitResults.flatMap((r) => (r.data ?? []).map((u: any) => u.listing_id).filter(Boolean))),
+    ];
+    query = query.in("id", matchedIds.length > 0 ? matchedIds : ["00000000-0000-0000-0000-000000000000"]);
+  }
 
   const { column, ascending } = SORT_MAP[sort] ?? SORT_MAP.recommend;
   query = query
