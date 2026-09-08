@@ -118,6 +118,8 @@ export interface Database {
           thumbnail_url: string | null;
           manager_name: string | null;
           manager_phone: string | null;
+          work_agreement_path: string | null;
+          business_card_path: string | null;
           view_count: number;
           like_count: number;
           is_approved: boolean;
@@ -595,6 +597,39 @@ export interface Database {
         Update: { visit_date?: string; count?: number };
         Relationships: [];
       };
+      manager_activation_requests: {
+        Row: {
+          id: string;
+          listing_id: string | null;
+          requester_id: string | null;
+          work_agreement_path: string;
+          business_card_path: string;
+          status: "대기" | "승인" | "반려";
+          rejection_reason: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          listing_id?: string | null;
+          requester_id?: string | null;
+          work_agreement_path: string;
+          business_card_path: string;
+          status?: "대기" | "승인" | "반려";
+          rejection_reason?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          listing_id?: string | null;
+          requester_id?: string | null;
+          work_agreement_path?: string;
+          business_card_path?: string;
+          status?: "대기" | "승인" | "반려";
+          rejection_reason?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -672,6 +707,10 @@ export interface Database {
       };
       increment_daily_visit: {
         Args: Record<PropertyKey, never>;
+        Returns: void;
+      };
+      resolve_activation_request: {
+        Args: { p_request_id: string; p_action: string };
         Returns: void;
       };
     };

@@ -109,6 +109,9 @@ create table listings (
   thumbnail_url text,
   manager_name text,
   manager_phone text,
+  -- 등록자가 실제 현장 근무자인지 확인하기 위한 검증서류 (Storage 비공개 버킷 내 경로)
+  work_agreement_path text,
+  business_card_path text,
   view_count int not null default 0,
   like_count int not null default 0,
   is_approved boolean not null default false,
@@ -932,6 +935,117 @@ create trigger profiles_protect_privileged_fields
 before update on profiles
 for each row
 execute function protect_profile_privileged_fields();
+
+-- ============================================================
+-- 담당자 신청(활성화 요청) — 등록자 본인이 아닌 사람이 미배정 현장의
+-- 담당자가 되려는 경우, 서류 제출 후 관리자 승인을 거쳐야만 실제로
+-- 활성화(포인트 차감 + 노출)되도록 하는 검증 절차입니다.
+-- ============================================================
+create table if not exists manager_activation_requests (
+  id uuid primary key default uuid_generate_v4(),
+  listing_id uuid references listings(id) on delete cascade,
+  requester_id uuid references profiles(id),
+  work_agreement_path text not null,
+  business_card_path text not null,
+  status text not null default '대기' check (status in ('대기','승인','반려')),
+  rejection_reason text,
+  created_at timestamptz not null default now()
+);
+
+alter table manager_activation_requests enable row level security;
+
+drop policy if exists "activation_requests_own_select" on manager_activation_requests;
+create policy "activation_requests_own_select" on manager_activation_requests
+  for select using (requester_id = auth.uid() or is_admin());
+
+drop policy if exists "activation_requests_insert" on manager_activation_requests;
+create policy "activation_requests_insert" on manager_activation_requests
+  for insert with check (requester_id = auth.uid());
+
+-- 신청 승인/반려 처리 (관리자 전용). 승인 시 실제 activate_manager와 동일한 검증을
+-- 승인 시점에 한 번 더 거친 뒤 담당자로 배정하고 포인트를 차감합니다.
+create or replace function resolve_activation_request(p_request_id uuid, p_action text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  r record;
+  v_points integer;
+  v_title text;
+begin
+  if not is_admin() then
+    raise exception '관리자만 처리할 수 있습니다.';
+  end if;
+  if p_action not in ('승인','반려') then
+    raise exception '알 수 없는 처리입니다.';
+  end if;
+
+  select * into r from manager_activation_requests where id = p_request_id;
+  if r is null then
+    raise exception '신청 내역을 찾을 수 없습니다.';
+  end if;
+  if r.status != '대기' then
+    raise exception '이미 처리된 신청입니다.';
+  end if;
+
+  if p_action = '반려' then
+    update manager_activation_requests set status = '반려' where id = p_request_id;
+    return;
+  end if;
+
+  -- 승인 처리: 그 사이 상황이 바뀌었을 수 있으니 다시 한 번 확인합니다.
+  if exists (select 1 from listings where id = r.listing_id and agency_id is not null) then
+    update manager_activation_requests set status = '반려', rejection_reason = '이미 다른 담당자가 배정되었습니다.'
+      where id = p_request_id;
+    raise exception '이미 다른 담당자가 배정된 현장이라 반려 처리했습니다.';
+  end if;
+  if exists (select 1 from listings where agency_id = r.requester_id) then
+    update manager_activation_requests set status = '반려', rejection_reason = '신청자가 이미 다른 현장을 담당중입니다.'
+      where id = p_request_id;
+    raise exception '신청자가 이미 다른 현장을 담당중이라 반려 처리했습니다.';
+  end if;
+
+  select points into v_points from profiles where id = r.requester_id;
+  if coalesce(v_points, 0) < 15000 then
+    update manager_activation_requests set status = '반려', rejection_reason = '신청자의 포인트가 부족합니다.'
+      where id = p_request_id;
+    raise exception '신청자의 포인트가 부족해 반려 처리했습니다.';
+  end if;
+
+  select title into v_title from listings where id = r.listing_id;
+
+  update profiles set points = points - 15000 where id = r.requester_id
+    returning points into v_points;
+  insert into point_transactions (user_id, type, amount, note, balance_after)
+    values (r.requester_id, '사용', -15000, format('"%s" 노출 (1일차)', v_title), v_points);
+
+  update listings set agency_id = r.requester_id, tenure_start = now(), last_deduction_date = current_date
+    where id = r.listing_id;
+
+  update manager_activation_requests set status = '승인' where id = p_request_id;
+end;
+$$;
+
+grant execute on function resolve_activation_request(uuid, text) to authenticated;
+
+-- 검증서류 전용 비공개 Storage 버킷 (업로더 본인 + 관리자만 조회 가능)
+insert into storage.buckets (id, name, public)
+values ('verification-docs', 'verification-docs', false)
+on conflict (id) do nothing;
+
+drop policy if exists "verification_docs_write" on storage.objects;
+create policy "verification_docs_write" on storage.objects
+  for insert with check (
+    bucket_id = 'verification-docs' and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+drop policy if exists "verification_docs_read" on storage.objects;
+create policy "verification_docs_read" on storage.objects
+  for select using (
+    bucket_id = 'verification-docs' and (is_admin() or (storage.foldername(name))[1] = auth.uid()::text)
+  );
 
 -- ============================================================
 -- 최초 관리자 계정 안내

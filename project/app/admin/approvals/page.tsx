@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AdminPageHeader, StatusBadge } from "@/components/admin/AdminUI";
 import { ApprovalActions } from "@/components/admin/ApprovalActions";
+import { VerificationDocLinks } from "@/components/admin/VerificationDocLinks";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +24,15 @@ export default async function ApprovalsPage({
     rejection_reason: string | null;
     created_at: string;
     registrant_id: string | null;
+    work_agreement_path: string | null;
+    business_card_path: string | null;
   };
 
   let query = supabase
     .from("listings")
-    .select("id, title, type, status, is_approved, rejection_reason, created_at, registrant_id")
+    .select(
+      "id, title, type, status, is_approved, rejection_reason, created_at, registrant_id, work_agreement_path, business_card_path"
+    )
     .order("created_at", { ascending: false });
 
   if (filter === "pending") query = query.eq("is_approved", false).is("rejection_reason", null);
@@ -63,6 +68,7 @@ export default async function ApprovalsPage({
               <th className="px-5 py-3 font-medium">분양명</th>
               <th className="px-5 py-3 font-medium">유형</th>
               <th className="px-5 py-3 font-medium">등록자</th>
+              <th className="px-5 py-3 font-medium">서류</th>
               <th className="px-5 py-3 font-medium">상태</th>
               <th className="px-5 py-3 font-medium">등록일</th>
               <th className="px-5 py-3 font-medium text-right">작업</th>
@@ -92,6 +98,12 @@ export default async function ApprovalsPage({
                     "-"}
                 </td>
                 <td className="px-5 py-3.5">
+                  <VerificationDocLinks
+                    workAgreementPath={l.work_agreement_path}
+                    businessCardPath={l.business_card_path}
+                  />
+                </td>
+                <td className="px-5 py-3.5">
                   <StatusBadge value={l.status} />
                 </td>
                 <td className="px-5 py-3.5 text-gray-500">{new Date(l.created_at).toLocaleDateString("ko-KR")}</td>
@@ -102,7 +114,7 @@ export default async function ApprovalsPage({
             ))}
             {(listings ?? []).length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-16 text-center text-stone">
+                <td colSpan={7} className="px-5 py-16 text-center text-stone">
                   표시할 항목이 없습니다.
                 </td>
               </tr>

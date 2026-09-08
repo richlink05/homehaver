@@ -1,19 +1,24 @@
 import { ListingStatusActions } from "@/components/listing/ListingStatusActions";
+import { ActivationRequestButton } from "@/components/listing/ActivationRequestButton";
 
 const HQ_PHONE = "1544-0892";
 
 export function ManagerContact({
   listingId,
+  listingTitle,
   managerName,
   managerPhone,
   hasManager,
   isAgencyViewer,
+  isRegistrant,
 }: {
   listingId: string;
+  listingTitle: string;
   managerName: string | null;
   managerPhone: string | null;
   hasManager: boolean;
   isAgencyViewer: boolean;
+  isRegistrant: boolean;
 }) {
   const displayName = hasManager && managerName ? managerName : "홈페이지 고객센터";
   const displayPhone = hasManager && managerPhone ? managerPhone : HQ_PHONE;
@@ -37,7 +42,13 @@ export function ManagerContact({
       </div>
 
       {!hasManager && isAgencyViewer ? (
-        <ListingStatusActions listingId={listingId} action="activate" />
+        isRegistrant ? (
+          // 본인이 등록한 현장은 등록 시 이미 서류를 제출·검토받았으므로 바로 활성화합니다.
+          <ListingStatusActions listingId={listingId} action="activate" />
+        ) : (
+          // 본인이 등록하지 않은(주인없는) 현장은 서류 제출 후 관리자 승인을 거쳐야 합니다.
+          <ActivationRequestButton listingId={listingId} listingTitle={listingTitle} />
+        )
       ) : (
         <div className="flex flex-col items-end gap-2">
           <div className="flex gap-2">

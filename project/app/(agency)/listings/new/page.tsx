@@ -28,6 +28,9 @@ export default function NewListingPage() {
   const supabase = createClient();
   const [images, setImages] = useState<UploadedFile[]>([]);
   const [unitTypes, setUnitTypes] = useState<UnitTypeRow[]>([]);
+  const [workAgreementFile, setWorkAgreementFile] = useState<File | null>(null);
+  const [businessCardFile, setBusinessCardFile] = useState<File | null>(null);
+  const [docError, setDocError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [profile, setProfile] = useState<{ name: string; phone: string } | null>(null);
 
@@ -103,6 +106,13 @@ export default function NewListingPage() {
 
   const onSubmit = async (values: ListingInput) => {
     setSubmitError(null);
+    setDocError(null);
+
+    if (!workAgreementFile || !businessCardFile) {
+      setDocError("근무이행각서와 명함은 필수 첨부 서류입니다. 두 파일 모두 첨부해주세요.");
+      return;
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -121,6 +131,25 @@ export default function NewListingPage() {
       setSubmitError(
         `분양등록은 최소 15,000P 이상 보유하신 경우에만 가능합니다. (현재 보유: ${(myProfile?.points ?? 0).toLocaleString("ko-KR")}P) 마이페이지 > 포인트관리에서 충전 후 다시 시도해주세요.`
       );
+      return;
+    }
+
+    // 근무이행각서 / 명함을 비공개 버킷에 업로드합니다 (경로 맨 앞에 본인 uid를 붙여 접근권한 정책과 맞춥니다).
+    const uploadDoc = async (file: File, label: string) => {
+      const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const path = `${user.id}/${Date.now()}-${label}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("verification-docs").upload(path, file);
+      if (uploadError) throw new Error(`${label} 업로드 실패: ${uploadError.message}`);
+      return path;
+    };
+
+    let workAgreementPath: string;
+    let businessCardPath: string;
+    try {
+      workAgreementPath = await uploadDoc(workAgreementFile, "work-agreement");
+      businessCardPath = await uploadDoc(businessCardFile, "business-card");
+    } catch (e: any) {
+      setSubmitError(e.message ?? "서류 업로드 중 오류가 발생했습니다.");
       return;
     }
 
@@ -186,6 +215,8 @@ export default function NewListingPage() {
         description: values.description,
         manager_name: profile?.name ?? values.managerName,
         manager_phone: profile?.phone ?? values.managerPhone,
+        work_agreement_path: workAgreementPath,
+        business_card_path: businessCardPath,
         is_approved: false,
       })
       .select("id")
@@ -415,6 +446,34 @@ export default function NewListingPage() {
                 onChange={setImages}
               />
             </div>
+          </FormSection>
+
+          <FormSection title="근무 확인 서류 (필수)">
+            <p className="col-span-2 -mt-2 mb-1 text-[12px] text-stone">
+              1인 1현장 원칙에 따라, 실제 해당 현장에서 근무 중인지 확인하기 위한 서류입니다. 관리자 승인 시 함께
+              검토됩니다.
+            </p>
+            <div>
+              <label className="mb-1.5 block text-[12.5px] text-gray-600">근무이행각서</label>
+              <input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,application/pdf"
+                onChange={(e) => setWorkAgreementFile(e.target.files?.[0] ?? null)}
+                className="input"
+              />
+              {workAgreementFile && <p className="mt-1 text-[11.5px] text-gold-deep">{workAgreementFile.name}</p>}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[12.5px] text-gray-600">명함</label>
+              <input
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,application/pdf"
+                onChange={(e) => setBusinessCardFile(e.target.files?.[0] ?? null)}
+                className="input"
+              />
+              {businessCardFile && <p className="mt-1 text-[11.5px] text-gold-deep">{businessCardFile.name}</p>}
+            </div>
+            {docError && <p className="col-span-2 text-[12.5px] text-red-500">{docError}</p>}
           </FormSection>
 
           <div className="mt-8 flex justify-end gap-3">

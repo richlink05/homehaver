@@ -199,10 +199,12 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
           <ManagerContact
             listingId={listing.id}
+            listingTitle={listing.title}
             managerName={listing.manager?.name ?? null}
             managerPhone={listing.manager?.phone ?? null}
             hasManager={!!listing.agency_id}
             isAgencyViewer={viewerRole === "agency"}
+            isRegistrant={!!user && user.id === listing.registrant_id}
           />
         </div>
 
