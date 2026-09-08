@@ -47,6 +47,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   } = await supabase.auth.getUser();
 
   let viewerRole: string | null = null;
+  let alreadyManagingElsewhere = false;
   if (user) {
     const { data: viewerProfile } = await supabase
       .from("profiles")
@@ -54,6 +55,13 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
       .eq("id", user.id)
       .single<{ role: string }>();
     viewerRole = viewerProfile?.role ?? null;
+
+    const { count } = await supabase
+      .from("listings")
+      .select("id", { count: "exact", head: true })
+      .eq("agency_id", user.id)
+      .neq("id", params.id);
+    alreadyManagingElsewhere = (count ?? 0) > 0;
   }
 
   const { data: listing, error: listingError } = await supabase
@@ -205,6 +213,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             hasManager={!!listing.agency_id}
             isAgencyViewer={viewerRole === "agency"}
             isRegistrant={!!user && user.id === listing.registrant_id}
+            alreadyManagingElsewhere={alreadyManagingElsewhere}
           />
         </div>
 

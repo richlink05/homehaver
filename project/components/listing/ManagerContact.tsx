@@ -11,6 +11,7 @@ export function ManagerContact({
   hasManager,
   isAgencyViewer,
   isRegistrant,
+  alreadyManagingElsewhere,
 }: {
   listingId: string;
   listingTitle: string;
@@ -19,6 +20,7 @@ export function ManagerContact({
   hasManager: boolean;
   isAgencyViewer: boolean;
   isRegistrant: boolean;
+  alreadyManagingElsewhere: boolean;
 }) {
   const displayName = hasManager && managerName ? managerName : "홈페이지 고객센터";
   const displayPhone = hasManager && managerPhone ? managerPhone : HQ_PHONE;
@@ -42,7 +44,13 @@ export function ManagerContact({
       </div>
 
       {!hasManager && isAgencyViewer ? (
-        isRegistrant ? (
+        alreadyManagingElsewhere ? (
+          <p className="max-w-[220px] text-right text-[12px] leading-relaxed text-stone">
+            이미 다른 현장을 담당중이라 신청할 수 없습니다.
+            <br />
+            (1인 1현장 원칙)
+          </p>
+        ) : isRegistrant ? (
           // 본인이 등록한 현장은 등록 시 이미 서류를 제출·검토받았으므로 바로 활성화합니다.
           <ListingStatusActions listingId={listingId} action="activate" />
         ) : (

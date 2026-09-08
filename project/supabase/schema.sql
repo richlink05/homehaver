@@ -960,7 +960,11 @@ create policy "activation_requests_own_select" on manager_activation_requests
 
 drop policy if exists "activation_requests_insert" on manager_activation_requests;
 create policy "activation_requests_insert" on manager_activation_requests
-  for insert with check (requester_id = auth.uid());
+  for insert with check (
+    requester_id = auth.uid()
+    -- 이미 다른 현장을 담당중이면 신청 자체가 막힙니다 (1인 1현장 원칙).
+    and not exists (select 1 from listings where agency_id = auth.uid())
+  );
 
 -- 신청 승인/반려 처리 (관리자 전용). 승인 시 실제 activate_manager와 동일한 검증을
 -- 승인 시점에 한 번 더 거친 뒤 담당자로 배정하고 포인트를 차감합니다.
