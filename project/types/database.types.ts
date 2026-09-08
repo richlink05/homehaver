@@ -713,6 +713,10 @@ export interface Database {
         Args: { p_request_id: string; p_action: string };
         Returns: void;
       };
+      get_my_waitlist_rank: {
+        Args: { p_listing_id: string };
+        Returns: number;
+      };
     };
     Enums: {
       [_ in never]: never;

@@ -27,12 +27,11 @@ export default async function ManagingListingsPage() {
     title: string;
     status: string;
     tenure_start: string | null;
-    listing_waitlist: { id: string }[];
   };
 
   const { data: listings } = await supabase
     .from("listings")
-    .select("id, title, status, tenure_start, listing_waitlist(id)")
+    .select("id, title, status, tenure_start")
     .eq("agency_id", user.id)
     .order("tenure_start", { ascending: false })
     .returns<ManagingRow[]>();
@@ -53,7 +52,6 @@ export default async function ManagingListingsPage() {
               <th className="px-5 py-3 font-medium">분양명</th>
               <th className="px-5 py-3 font-medium">분양상태</th>
               <th className="px-5 py-3 font-medium">담당 시작일</th>
-              <th className="px-5 py-3 font-medium">대기자</th>
               <th className="px-5 py-3 text-right font-medium">작업</th>
             </tr>
           </thead>
@@ -68,15 +66,6 @@ export default async function ManagingListingsPage() {
                 <td className="px-5 py-3.5 text-gray-600">{l.status}</td>
                 <td className="px-5 py-3.5 text-gray-500">
                   {l.tenure_start ? new Date(l.tenure_start).toLocaleDateString("ko-KR") : "-"}
-                </td>
-                <td className="px-5 py-3.5">
-                  {l.listing_waitlist?.length > 0 ? (
-                    <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[11.5px] font-semibold text-gold-deep">
-                      {l.listing_waitlist.length}명 대기중
-                    </span>
-                  ) : (
-                    <span className="text-gray-400">없음</span>
-                  )}
                 </td>
                 <td className="px-5 py-3.5 text-right">
                   <div className="flex items-center justify-end gap-2">
@@ -93,7 +82,7 @@ export default async function ManagingListingsPage() {
             ))}
             {(listings ?? []).length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-16 text-center text-stone">
+                <td colSpan={4} className="px-5 py-16 text-center text-stone">
                   현재 담당하고 있는 현장이 없습니다.
                 </td>
               </tr>

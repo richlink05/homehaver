@@ -1052,6 +1052,28 @@ create policy "verification_docs_read" on storage.objects
   );
 
 -- ============================================================
+-- 대기자 본인의 순번만 계산해서 알려주는 함수. listing_waitlist 조회 정책상
+-- 본인이 아니면 다른 대기자 행을 볼 수 없어서, 순번 계산은 이 함수로 우회합니다.
+-- (다른 대기자의 신원이나 신청시각은 노출하지 않고 "몇 번째인지" 숫자만 반환합니다.)
+-- ============================================================
+create or replace function get_my_waitlist_rank(p_listing_id uuid)
+returns int
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select count(*) + 1 from listing_waitlist
+  where listing_id = p_listing_id
+    and requested_at < (
+      select requested_at from listing_waitlist
+      where listing_id = p_listing_id and user_id = auth.uid()
+    );
+$$;
+
+grant execute on function get_my_waitlist_rank(uuid) to authenticated;
+
+-- ============================================================
 -- 최초 관리자 계정 안내
 -- ============================================================
 -- 신규 가입자는 기본적으로 is_approved = false 상태입니다.

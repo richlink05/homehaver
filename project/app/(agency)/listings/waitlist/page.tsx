@@ -23,16 +23,25 @@ export default async function WaitlistPage() {
 
   type WaitlistRow = {
     id: string;
+    listing_id: string;
     requested_at: string;
     listings: { id: string; title: string; status: string; agency_id: string | null } | null;
   };
 
   const { data: rows } = await supabase
     .from("listing_waitlist")
-    .select("id, requested_at, listings(id, title, status, agency_id)")
+    .select("id, listing_id, requested_at, listings(id, title, status, agency_id)")
     .eq("user_id", user.id)
     .order("requested_at", { ascending: true })
     .returns<WaitlistRow[]>();
+
+  // 내 순번만 안전하게 계산해주는 함수를 현장별로 호출합니다 (다른 대기자 정보는 노출되지 않음).
+  const myRankMap = new Map<string, number>();
+  for (const r of rows ?? []) {
+    // ⚠️ rpc() 인자 타입 추론 문제 우회 (increment_view_count와 동일한 이유)
+    const { data: rank } = await (supabase.rpc as any)("get_my_waitlist_rank", { p_listing_id: r.listing_id });
+    if (typeof rank === "number") myRankMap.set(r.listing_id, rank);
+  }
 
   return (
     <MypageShell role={profile?.role} name={profile?.name} activeHref="/listings/waitlist">
@@ -49,6 +58,7 @@ export default async function WaitlistPage() {
             <tr>
               <th className="px-5 py-3 font-medium">분양명</th>
               <th className="px-5 py-3 font-medium">분양상태</th>
+              <th className="px-5 py-3 font-medium">내 순번</th>
               <th className="px-5 py-3 font-medium">신청일</th>
             </tr>
           </thead>
@@ -65,6 +75,11 @@ export default async function WaitlistPage() {
                   )}
                 </td>
                 <td className="px-5 py-3.5 text-gray-600">{r.listings?.status ?? "-"}</td>
+                <td className="px-5 py-3.5">
+                  <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[11.5px] font-semibold text-gold-deep">
+                    {myRankMap.get(r.listing_id) ?? "-"}번째
+                  </span>
+                </td>
                 <td className="px-5 py-3.5 text-gray-500">
                   {new Date(r.requested_at).toLocaleDateString("ko-KR")}
                 </td>
@@ -72,7 +87,7 @@ export default async function WaitlistPage() {
             ))}
             {(rows ?? []).length === 0 && (
               <tr>
-                <td colSpan={3} className="px-5 py-16 text-center text-stone">
+                <td colSpan={4} className="px-5 py-16 text-center text-stone">
                   대기중인 현장이 없습니다.
                 </td>
               </tr>
