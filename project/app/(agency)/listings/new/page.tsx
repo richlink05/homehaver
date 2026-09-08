@@ -390,7 +390,7 @@ export default function NewListingPage() {
           </FormSection>
 
           <FormSection title="담당자 정보">
-            <p className="col-span-2 -mt-2 mb-1 text-[12px] text-stone">
+            <p className="col-span-2 mb-2 text-[12px] text-stone">
               회원가입 시 등록하신 이름·연락처로 자동 고정됩니다.
             </p>
             <Field label="담당자 이름">
@@ -449,7 +449,7 @@ export default function NewListingPage() {
           </FormSection>
 
           <FormSection title="근무 확인 서류 (필수)">
-            <p className="col-span-2 -mt-2 mb-1 text-[12px] text-stone">
+            <p className="col-span-2 mb-2 text-[12px] text-stone">
               1인 1현장 원칙에 따라, 실제 해당 현장에서 근무 중인지 확인하기 위한 서류입니다. 관리자 승인 시 함께
               검토됩니다.
             </p>
