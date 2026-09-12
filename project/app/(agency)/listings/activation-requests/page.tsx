@@ -42,6 +42,15 @@ export default async function MyActivationRequestsPage() {
     .order("created_at", { ascending: false })
     .returns<RequestRow[]>();
 
+  // 대기중인 신청은 내 순번만 안전하게 계산해서 표시합니다 (다른 신청자 정보는 노출되지 않음).
+  const rankMap = new Map<string, number>();
+  for (const r of requests ?? []) {
+    if (r.status !== "대기") continue;
+    // ⚠️ rpc() 인자 타입 추론 문제 우회 (increment_view_count와 동일한 이유)
+    const { data: rank } = await (supabase.rpc as any)("get_my_activation_rank", { p_request_id: r.id });
+    if (typeof rank === "number") rankMap.set(r.id, rank);
+  }
+
   return (
     <MypageShell role={profile?.role} name={profile?.name} activeHref="/listings/activation-requests">
       <div className="mb-8">
@@ -57,6 +66,7 @@ export default async function MyActivationRequestsPage() {
             <tr>
               <th className="px-5 py-3 font-medium">분양명</th>
               <th className="px-5 py-3 font-medium">상태</th>
+              <th className="px-5 py-3 font-medium">내 순번</th>
               <th className="px-5 py-3 font-medium">신청일</th>
             </tr>
           </thead>
@@ -80,6 +90,15 @@ export default async function MyActivationRequestsPage() {
                     <p className="mt-1 text-[11.5px] text-red-500">사유: {r.rejection_reason}</p>
                   )}
                 </td>
+                <td className="px-5 py-3.5">
+                  {r.status === "대기" ? (
+                    <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[11.5px] font-semibold text-gold-deep">
+                      {rankMap.get(r.id) ?? "-"}번째
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
+                </td>
                 <td className="px-5 py-3.5 text-gray-500">
                   {new Date(r.created_at).toLocaleDateString("ko-KR")}
                 </td>
@@ -87,7 +106,7 @@ export default async function MyActivationRequestsPage() {
             ))}
             {(requests ?? []).length === 0 && (
               <tr>
-                <td colSpan={3} className="px-5 py-16 text-center text-stone">
+                <td colSpan={4} className="px-5 py-16 text-center text-stone">
                   신청한 내역이 없습니다.
                 </td>
               </tr>

@@ -19,6 +19,7 @@ export function ActivationRequestButton({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [myRank, setMyRank] = useState<number | null>(null);
 
   const submit = async () => {
     setError("");
@@ -50,13 +51,22 @@ export function ActivationRequestButton({
       const businessCardPath = await uploadDoc(businessCardFile, "business-card");
 
       // ⚠️ insert() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
-      const { error: insertError } = await (supabase.from("manager_activation_requests") as any).insert({
-        listing_id: listingId,
-        requester_id: user.id,
-        work_agreement_path: workAgreementPath,
-        business_card_path: businessCardPath,
-      });
+      const { data: inserted, error: insertError } = await (supabase.from("manager_activation_requests") as any)
+        .insert({
+          listing_id: listingId,
+          requester_id: user.id,
+          work_agreement_path: workAgreementPath,
+          business_card_path: businessCardPath,
+        })
+        .select("id")
+        .single();
       if (insertError) throw new Error(insertError.message);
+
+      // ⚠️ rpc() 인자 타입 추론 문제 우회 (increment_view_count와 동일한 이유)
+      const { data: rank } = await (supabase.rpc as any)("get_my_activation_rank", {
+        p_request_id: inserted.id,
+      });
+      if (typeof rank === "number") setMyRank(rank);
 
       setSubmitted(true);
       router.refresh();
@@ -83,6 +93,11 @@ export function ActivationRequestButton({
               <div className="text-center">
                 <div className="mb-2.5 text-[32px]">✓</div>
                 <p className="mb-1.5 text-[14px] font-semibold">신청이 접수되었습니다</p>
+                {myRank && (
+                  <p className="mb-2.5 text-[13px] font-semibold text-gold-deep">
+                    현재 이 현장에 {myRank}번째로 접수되었습니다.
+                  </p>
+                )}
                 <p className="mb-6 text-[12.5px] text-stone">
                   관리자 검토 후 승인되면 "{listingTitle}" 현장의 담당자로 활성화되고 포인트가 차감됩니다.
                 </p>

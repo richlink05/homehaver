@@ -378,36 +378,21 @@ create policy "waitlist_select" on listing_waitlist
 -- 대기자 → 현재 담당자로 인계(또는 대기자가 없으면 담당자 미배정 처리)하는 내부 함수입니다.
 -- authenticated/anon에는 실행 권한을 주지 않아 클라이언트에서 직접 호출할 수 없고,
 -- 아래 stop_managing()/process_daily_deductions() 안에서만 호출됩니다.
+-- 담당자가 이탈(그만두기/포인트소진/활동정지)했을 때 호출됩니다.
+-- 예전에는 대기열(listing_waitlist)에서 검증 없이 자동으로 다음 사람에게 넘겼지만,
+-- 이제는 무조건 미배정 상태로 전환만 하고, 그 다음은 이 현장을 즐겨찾기한 분양담당자들이
+-- (알림을 받고) 서류를 제출해 관리자 승인을 거쳐야 새 담당자가 됩니다(선착순 신청, activation_requests).
+-- TODO: 알림 발송 연동 예정 — 이 함수가 호출되는 시점에 이 listing_id를 즐겨찾기한
+-- 분양담당자 전원에게 카카오 알림톡을 보내는 로직을 추가해야 합니다.
 create or replace function handoff_listing(p_listing_id uuid)
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
-declare
-  next_row record;
 begin
-  loop
-    select * into next_row from listing_waitlist
-      where listing_id = p_listing_id
-      order by requested_at asc
-      limit 1;
-
-    if next_row is null then
-      update listings set agency_id = null, tenure_start = null, last_deduction_date = null
-        where id = p_listing_id;
-      return;
-    end if;
-
-    delete from listing_waitlist where id = next_row.id;
-
-    if coalesce((select points from profiles where id = next_row.user_id), 0) >= 15000 then
-      update listings set agency_id = next_row.user_id, tenure_start = null, last_deduction_date = null
-        where id = p_listing_id;
-      return;
-    end if;
-    -- 포인트 부족한 대기자는 자동으로 건너뛰고 다음 대기자를 확인합니다.
-  end loop;
+  update listings set agency_id = null, tenure_start = null, last_deduction_date = null
+    where id = p_listing_id;
 end;
 $$;
 
@@ -1029,6 +1014,11 @@ begin
     where id = r.listing_id;
 
   update manager_activation_requests set status = '승인' where id = p_request_id;
+
+  -- 선착순 안전장치: 같은 현장에 걸려있던 다른 대기중 신청들은 자동으로 반려 처리합니다.
+  update manager_activation_requests
+    set status = '반려', rejection_reason = '다른 신청자가 먼저 승인되었습니다.'
+    where listing_id = r.listing_id and status = '대기' and id != p_request_id;
 end;
 $$;
 
@@ -1072,6 +1062,26 @@ as $$
 $$;
 
 grant execute on function get_my_waitlist_rank(uuid) to authenticated;
+
+-- ============================================================
+-- 담당자 신청(activation_requests)의 내 순번만 안전하게 계산해서 알려주는 함수.
+-- get_my_waitlist_rank와 같은 이유로, 본인 신청이 아니면 다른 신청자 정보를
+-- 볼 수 없어서 순번 계산은 이 함수로 우회합니다.
+-- ============================================================
+create or replace function get_my_activation_rank(p_request_id uuid)
+returns int
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select count(*) + 1 from manager_activation_requests
+  where listing_id = (select listing_id from manager_activation_requests where id = p_request_id)
+    and status = '대기'
+    and created_at < (select created_at from manager_activation_requests where id = p_request_id);
+$$;
+
+grant execute on function get_my_activation_rank(uuid) to authenticated;
 
 -- ============================================================
 -- 최초 관리자 계정 안내

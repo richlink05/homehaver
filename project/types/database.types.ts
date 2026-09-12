@@ -717,6 +717,10 @@ export interface Database {
         Args: { p_listing_id: string };
         Returns: number;
       };
+      get_my_activation_rank: {
+        Args: { p_request_id: string };
+        Returns: number;
+      };
     };
     Enums: {
       [_ in never]: never;

@@ -28,7 +28,7 @@ export default async function ActivationRequestsPage({
     .from("manager_activation_requests")
     .select("id, listing_id, requester_id, work_agreement_path, business_card_path, status, rejection_reason, created_at")
     .eq("status", filter)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: true })
     .returns<RequestRow[]>();
 
   // listings/profiles는 별도로 한 번에 조회해서 매칭합니다 (조인 모호성 방지 패턴 그대로 사용).
@@ -48,6 +48,17 @@ export default async function ActivationRequestsPage({
     .in("id", requesterIds.length > 0 ? requesterIds : ["00000000-0000-0000-0000-000000000000"])
     .returns<{ id: string; name: string | null; email: string | null; phone: string | null }[]>();
   const requesterMap = new Map((requesters ?? []).map((r) => [r.id, r]));
+
+  // 같은 현장에 대기중인 신청이 여러 건이면, 가장 먼저 접수된 것만 승인 가능하도록
+  // 현장별 순번을 계산합니다 (선착순 원칙이 관리자 실수로 깨지지 않도록 하는 안전장치).
+  const rankWithinListing = new Map<string, number>();
+  const seenCountByListing = new Map<string, number>();
+  (requests ?? []).forEach((r) => {
+    if (r.status !== "대기" || !r.listing_id) return;
+    const count = (seenCountByListing.get(r.listing_id) ?? 0) + 1;
+    seenCountByListing.set(r.listing_id, count);
+    rankWithinListing.set(r.id, count);
+  });
 
   return (
     <div>
@@ -81,17 +92,24 @@ export default async function ActivationRequestsPage({
                   <p className="text-[14px] font-semibold">{listing?.title ?? "(삭제된 현장)"}</p>
                   <p className="text-[12px] text-stone">{listing?.address ?? ""}</p>
                 </div>
-                <span
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                    r.status === "대기"
-                      ? "border border-line text-gray-500"
-                      : r.status === "반려"
-                      ? "bg-mist text-gray-500"
-                      : "bg-gold/15 text-gold-deep"
-                  }`}
-                >
-                  {r.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  {r.status === "대기" && rankWithinListing.get(r.id) && rankWithinListing.get(r.id)! > 1 && (
+                    <span className="rounded-full bg-mist px-2.5 py-1 text-[11px] font-semibold text-gray-500">
+                      이 현장 {rankWithinListing.get(r.id)}번째 신청
+                    </span>
+                  )}
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                      r.status === "대기"
+                        ? "border border-line text-gray-500"
+                        : r.status === "반려"
+                        ? "bg-mist text-gray-500"
+                        : "bg-gold/15 text-gold-deep"
+                    }`}
+                  >
+                    {r.status}
+                  </span>
+                </div>
               </div>
 
               <div className="mb-3 grid grid-cols-2 gap-4 rounded bg-mist/50 px-4 py-3 text-[12.5px]">
@@ -121,7 +139,9 @@ export default async function ActivationRequestsPage({
                 <p className="mb-3 text-[12px] text-red-500">반려사유: {r.rejection_reason}</p>
               )}
 
-              {r.status === "대기" && <ActivationRequestActions requestId={r.id} />}
+              {r.status === "대기" && (
+                <ActivationRequestActions requestId={r.id} isEarliest={rankWithinListing.get(r.id) === 1} />
+              )}
             </div>
           );
         })}

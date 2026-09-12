@@ -74,7 +74,11 @@ export function ManagerContact({
             </a>
           </div>
           {hasManager && isAgencyViewer && (
-            <ListingStatusActions listingId={listingId} action="join_waitlist" />
+            <p className="max-w-[220px] text-right text-[12px] leading-relaxed text-stone">
+              담당자가 배정된 현장입니다.
+              <br />
+              위 <b className="text-gold-deep">즐겨찾기</b>를 눌러두시면, 담당자가 이탈할 때 알려드립니다.
+            </p>
           )}
         </div>
       )}

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { AdminPageHeader } from "@/components/admin/AdminUI";
-import { WaitlistCount } from "@/components/admin/WaitlistCount";
+import { FavoriteCount } from "@/components/admin/FavoriteCount";
 import { BackfillGeocodeButton } from "@/components/admin/BackfillGeocodeButton";
 
 export const dynamic = "force-dynamic";
@@ -32,33 +32,33 @@ export default async function AdStatusPage() {
     .returns<{ id: string; name: string | null; email: string | null }[]>();
   const managerMap = new Map((managers ?? []).map((m) => [m.id, m]));
 
-  // 대기자 목록은 listing_waitlist→profiles가 외래키 하나뿐이라 바로 조인해도 안전합니다.
-  type WaitlistRow = {
+  // 즐겨찾기 목록은 favorites→profiles가 외래키 하나뿐이라 바로 조인해도 안전합니다.
+  type FavoriteRow = {
     id: string;
     listing_id: string;
-    requested_at: string;
+    created_at: string;
     profiles: { name: string | null; email: string | null } | null;
   };
   const listingIds = (listings ?? []).map((l) => l.id);
-  const { data: waitlistRows } = await supabase
-    .from("listing_waitlist")
-    .select("id, listing_id, requested_at, profiles(name, email)")
+  const { data: favoriteRows } = await supabase
+    .from("favorites")
+    .select("id, listing_id, created_at, profiles(name, email)")
     .in("listing_id", listingIds.length > 0 ? listingIds : ["00000000-0000-0000-0000-000000000000"])
-    .order("requested_at", { ascending: true })
-    .returns<WaitlistRow[]>();
+    .order("created_at", { ascending: true })
+    .returns<FavoriteRow[]>();
 
-  const waitlistByListing = new Map<string, { name: string | null; email: string | null; requested_at: string }[]>();
-  (waitlistRows ?? []).forEach((w) => {
-    const arr = waitlistByListing.get(w.listing_id) ?? [];
-    arr.push({ name: w.profiles?.name ?? null, email: w.profiles?.email ?? null, requested_at: w.requested_at });
-    waitlistByListing.set(w.listing_id, arr);
+  const favoritesByListing = new Map<string, { name: string | null; email: string | null; created_at: string }[]>();
+  (favoriteRows ?? []).forEach((f) => {
+    const arr = favoritesByListing.get(f.listing_id) ?? [];
+    arr.push({ name: f.profiles?.name ?? null, email: f.profiles?.email ?? null, created_at: f.created_at });
+    favoritesByListing.set(f.listing_id, arr);
   });
 
   return (
     <div>
       <AdminPageHeader
         title="광고내역"
-        description="승인된 현장별 현재 담당자와 대기자 현황을 확인합니다. 담당자가 없는 현장은 영업 대상입니다."
+        description="승인된 현장별 현재 담당자와 즐겨찾기 현황을 확인합니다. 담당자가 없는 현장은 영업 대상입니다."
       />
 
       <BackfillGeocodeButton />
@@ -70,13 +70,13 @@ export default async function AdStatusPage() {
               <th className="px-5 py-3 font-medium">현장명</th>
               <th className="px-5 py-3 font-medium">주소</th>
               <th className="px-5 py-3 font-medium">현재 담당자</th>
-              <th className="px-5 py-3 font-medium">대기자 수</th>
+              <th className="px-5 py-3 font-medium">즐겨찾기 수</th>
             </tr>
           </thead>
           <tbody>
             {(listings ?? []).map((l) => {
               const manager = l.agency_id ? managerMap.get(l.agency_id) : null;
-              const waitlist = waitlistByListing.get(l.id) ?? [];
+              const favorites = favoritesByListing.get(l.id) ?? [];
               return (
                 <tr key={l.id} className="border-b border-line last:border-0 hover:bg-mist/30">
                   <td className="px-5 py-3.5 font-medium">{l.title}</td>
@@ -93,7 +93,7 @@ export default async function AdStatusPage() {
                     )}
                   </td>
                   <td className="px-5 py-3.5">
-                    <WaitlistCount waitlist={waitlist} />
+                    <FavoriteCount favorites={favorites} />
                   </td>
                 </tr>
               );

@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export function ActivationRequestActions({ requestId }: { requestId: string }) {
+export function ActivationRequestActions({
+  requestId,
+  isEarliest,
+}: {
+  requestId: string;
+  isEarliest: boolean;
+}) {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
@@ -32,21 +38,27 @@ export function ActivationRequestActions({ requestId }: { requestId: string }) {
   };
 
   return (
-    <div className="flex gap-2">
-      <button
-        onClick={() => resolve("승인")}
-        disabled={loading}
-        className="rounded bg-gold px-4 py-1.5 text-xs font-semibold text-white hover:bg-gold-deep disabled:opacity-50"
-      >
-        승인
-      </button>
-      <button
-        onClick={() => resolve("반려")}
-        disabled={loading}
-        className="rounded border border-line px-4 py-1.5 text-xs text-gray-600 hover:border-red-300 hover:text-red-500 disabled:opacity-50"
-      >
-        반려
-      </button>
+    <div>
+      <div className="flex gap-2">
+        <button
+          onClick={() => resolve("승인")}
+          disabled={loading || !isEarliest}
+          title={!isEarliest ? "같은 현장에 먼저 접수된 신청이 있어 순서상 승인할 수 없습니다." : undefined}
+          className="rounded bg-gold px-4 py-1.5 text-xs font-semibold text-white hover:bg-gold-deep disabled:cursor-not-allowed disabled:bg-mist disabled:text-gray-400"
+        >
+          승인
+        </button>
+        <button
+          onClick={() => resolve("반려")}
+          disabled={loading}
+          className="rounded border border-line px-4 py-1.5 text-xs text-gray-600 hover:border-red-300 hover:text-red-500 disabled:opacity-50"
+        >
+          반려
+        </button>
+      </div>
+      {!isEarliest && (
+        <p className="mt-1.5 text-[11px] text-stone">같은 현장에 먼저 접수된 신청부터 처리해주세요 (선착순 원칙).</p>
+      )}
     </div>
   );
 }
