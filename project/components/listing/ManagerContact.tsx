@@ -22,7 +22,9 @@ export function ManagerContact({
   isRegistrant: boolean;
   alreadyManagingElsewhere: boolean;
 }) {
-  const displayName = hasManager && managerName ? managerName : "홈페이지 고객센터";
+  // 일반 방문자에게는 담당자 배정 여부를 굳이 드러내지 않고 "홈해버"로만 보여줍니다.
+  // 분양담당자에게는 신청 가능 여부 판단이 필요해 미배정 상태를 그대로 알려줍니다.
+  const displayName = hasManager && managerName ? managerName : isAgencyViewer ? "홈페이지 고객센터" : "홈해버";
   const displayPhone = hasManager && managerPhone ? managerPhone : HQ_PHONE;
 
   return (
@@ -32,9 +34,11 @@ export function ManagerContact({
           {displayName.charAt(0)}
         </div>
         <div>
-          <p className="mb-0.5 text-[11.5px] font-semibold text-gold-deep">
-            {hasManager ? "이 현장 담당자" : "담당자 미배정 현장"}
-          </p>
+          {(hasManager || isAgencyViewer) && (
+            <p className="mb-0.5 text-[11.5px] font-semibold text-gold-deep">
+              {hasManager ? "이 현장 담당자" : "담당자 미배정 현장"}
+            </p>
+          )}
           <p className="mb-0.5 text-[15.5px] font-bold">{displayName}</p>
           <p className="text-[13px] text-gray-600">
             {displayPhone}
