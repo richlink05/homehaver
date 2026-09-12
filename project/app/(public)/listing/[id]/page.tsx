@@ -5,6 +5,7 @@ import { ListingGallery } from "@/components/listing/ListingGallery";
 import { ListingInfoRow } from "@/components/listing/ListingInfoRow";
 import { ListingTabs } from "@/components/listing/ListingTabs";
 import { ManagerContact } from "@/components/listing/ManagerContact";
+import { FavoriteButton } from "@/components/listing/FavoriteButton";
 import { ConsultForm } from "@/components/consult/ConsultForm";
 import { KakaoMap } from "@/components/map/KakaoMap";
 
@@ -140,6 +141,12 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             moveInDate={moveInDateLabel}
             builderName={listing.builders?.name ?? "-"}
           />
+
+          {viewerRole === "agency" && (
+            <div className="mb-9 flex justify-end">
+              <FavoriteButton listingId={listing.id} />
+            </div>
+          )}
 
           <h5 className="mb-3.5 text-[15px] font-semibold">단지 개요</h5>
           <div className="mb-9 grid grid-cols-2 gap-4">
