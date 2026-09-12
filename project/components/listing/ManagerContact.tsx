@@ -1,3 +1,5 @@
+"use client";
+
 import { ListingStatusActions } from "@/components/listing/ListingStatusActions";
 import { ActivationRequestButton } from "@/components/listing/ActivationRequestButton";
 
@@ -66,6 +68,14 @@ export function ManagerContact({
           <div className="flex gap-2">
             <a
               href={`tel:${displayPhone.replace(/-/g, "")}`}
+              onClick={(e) => {
+                // PC(터치 아닌 환경)에서는 전화 자체가 안 되니, 앱 선택창 대신 안내만 띄웁니다.
+                const isMobile = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+                if (!isMobile) {
+                  e.preventDefault();
+                  alert("전화 연결은 모바일에서 확인해주세요.");
+                }
+              }}
               className="rounded-md bg-gold px-4.5 py-2.5 text-[13px] font-semibold text-white transition-colors hover:bg-gold-deep"
             >
               전화 문의
