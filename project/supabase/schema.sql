@@ -1089,3 +1089,16 @@ grant execute on function get_my_activation_rank(uuid) to authenticated;
 -- 신규 가입자는 기본적으로 is_approved = false 상태입니다.
 -- 최초 관리자 계정은 가입 후 아래처럼 직접 승인/역할 지정이 필요합니다:
 --   update profiles set role = 'admin', is_approved = true where email = '<admin-email>';
+
+-- ============================================================
+-- 크롤링 수집 매물 구분 (/api/crawler/listings)
+-- ============================================================
+-- 사람이 등록(work_agreement_path 등 서류 제출)한 매물과, 외부 크롤러가 수집해
+-- 넣은 매물을 구분하기 위한 컬럼입니다. 크롤링 매물은 agency_id/registrant_id가
+-- 비어있는 상태로 들어오며, is_approved=false로 생성되어 기존과 동일하게
+-- 관리자 승인을 거쳐야 노출됩니다. RLS/GRANT는 테이블 단위라 listings에 이미
+-- 적용된 정책이 그대로 적용되고(이 컬럼 추가로 별도 변경 불필요), insert 자체는
+-- service_role 키를 쓰는 /api/crawler/listings 라우트에서만 이루어집니다
+-- (listings_agency_insert 정책상 일반 로그인 계정으로는 불가능합니다).
+alter table listings add column if not exists source text not null default 'manual' check (source in ('manual','crawled'));
+create index if not exists idx_listings_source on listings (source);

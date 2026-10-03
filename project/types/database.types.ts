@@ -124,6 +124,7 @@ export interface Database {
           like_count: number;
           is_approved: boolean;
           rejection_reason: string | null;
+          source: "manual" | "crawled";
           created_at: string;
           updated_at: string;
         };
@@ -157,6 +158,7 @@ export interface Database {
           like_count?: number;
           is_approved?: boolean;
           rejection_reason?: string | null;
+          source?: "manual" | "crawled";
           created_at?: string;
           updated_at?: string;
         };
@@ -190,6 +192,7 @@ export interface Database {
           like_count?: number;
           is_approved?: boolean;
           rejection_reason?: string | null;
+          source?: "manual" | "crawled";
           created_at?: string;
           updated_at?: string;
         };
