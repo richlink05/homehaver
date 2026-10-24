@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { MypageShell } from "@/components/mypage/MypageShell";
+import { formatKst, formatWon } from "@/lib/exposure";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,7 @@ const STATUS_STYLE: Record<string, string> = {
   대기: "bg-mist text-gray-600",
   승인: "bg-gold/15 text-gold-deep",
   반려: "bg-red-50 text-red-500",
+  결제만료: "bg-red-50 text-red-500",
 };
 
 export default async function MyActivationRequestsPage() {
@@ -29,23 +31,34 @@ export default async function MyActivationRequestsPage() {
 
   type RequestRow = {
     id: string;
-    status: "대기" | "승인" | "반려";
+    status: "대기" | "승인" | "반려" | "결제만료";
     rejection_reason: string | null;
+    days: number;
     created_at: string;
     listings: { id: string; title: string } | null;
   };
 
   const { data: requests } = await supabase
     .from("manager_activation_requests")
-    .select("id, status, rejection_reason, created_at, listings(id, title)")
+    .select("id, status, rejection_reason, days, created_at, listings(id, title)")
     .eq("requester_id", user.id)
     .order("created_at", { ascending: false })
     .returns<RequestRow[]>();
 
-  // 대기중인 신청은 내 순번만 안전하게 계산해서 표시합니다 (다른 신청자 정보는 노출되지 않음).
+  // 신청별 결제 진행 상태(결제 대기/노출 예정 등)를 함께 보여주기 위해 내 주문을 조회합니다.
+  type OrderRow = { request_id: string | null; status: string; pay_deadline: string | null; starts_at: string | null; ends_at: string | null; amount: number };
+  const ordersRes = await supabase
+    .from("exposure_orders")
+    .select("request_id, status, pay_deadline, starts_at, ends_at, amount")
+    .eq("user_id", user.id)
+    .not("request_id", "is", null);
+  const orders = (ordersRes.data ?? []) as OrderRow[];
+  const orderByRequest = new Map(orders.map((o) => [o.request_id as string, o]));
+
+  // 순번 대기중인 신청은 내 순번만 안전하게 계산해서 표시합니다 (다른 신청자 정보는 노출되지 않음).
   const rankMap = new Map<string, number>();
   for (const r of requests ?? []) {
-    if (r.status !== "대기") continue;
+    if (!(r.status === "대기" || (r.status === "승인" && !orderByRequest.has(r.id)))) continue;
     // ⚠️ rpc() 인자 타입 추론 문제 우회 (increment_view_count와 동일한 이유)
     const { data: rank } = await (supabase.rpc as any)("get_my_activation_rank", { p_request_id: r.id });
     if (typeof rank === "number") rankMap.set(r.id, rank);
@@ -66,7 +79,7 @@ export default async function MyActivationRequestsPage() {
             <tr>
               <th className="px-5 py-3 font-medium">분양명</th>
               <th className="px-5 py-3 font-medium">상태</th>
-              <th className="px-5 py-3 font-medium">내 순번</th>
+              <th className="px-5 py-3 font-medium">내 순번 / 결제</th>
               <th className="px-5 py-3 font-medium">신청일</th>
             </tr>
           </thead>
@@ -86,18 +99,39 @@ export default async function MyActivationRequestsPage() {
                   <span className={`rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${STATUS_STYLE[r.status]}`}>
                     {r.status}
                   </span>
+                  {r.status === "결제만료" && (
+                    <p className="mt-1 text-[11.5px] text-red-500">24시간 안에 결제하지 않아 다음 순번으로 넘어갔습니다.</p>
+                  )}
                   {r.status === "반려" && r.rejection_reason && (
                     <p className="mt-1 text-[11.5px] text-red-500">사유: {r.rejection_reason}</p>
                   )}
                 </td>
                 <td className="px-5 py-3.5">
-                  {r.status === "대기" ? (
-                    <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[11.5px] font-semibold text-gold-deep">
-                      {rankMap.get(r.id) ?? "-"}번째
-                    </span>
-                  ) : (
-                    <span className="text-gray-400">-</span>
-                  )}
+                  {(() => {
+                    const o = orderByRequest.get(r.id);
+                    if (o?.status === "결제대기") {
+                      return (
+                        <span className="text-[12.5px] font-semibold text-gold-deep">
+                          내 차례! {formatKst(o.pay_deadline)}까지 결제 ({formatWon(o.amount)})
+                        </span>
+                      );
+                    }
+                    if (o?.status === "결제완료") {
+                      return (
+                        <span className="text-[12.5px] text-gray-600">
+                          노출 {formatKst(o.starts_at)} ~ {formatKst(o.ends_at)}
+                        </span>
+                      );
+                    }
+                    if (rankMap.has(r.id)) {
+                      return (
+                        <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[11.5px] font-semibold text-gold-deep">
+                          {rankMap.get(r.id)}번째
+                        </span>
+                      );
+                    }
+                    return <span className="text-gray-400">-</span>;
+                  })()}
                 </td>
                 <td className="px-5 py-3.5 text-gray-500">
                   {new Date(r.created_at).toLocaleDateString("ko-KR")}

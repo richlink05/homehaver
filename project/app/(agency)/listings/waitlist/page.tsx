@@ -48,7 +48,7 @@ export default async function WaitlistPage() {
       <div className="mb-8">
         <h1 className="mb-1.5 font-serif text-[22px] font-semibold">대기중인 현장</h1>
         <p className="text-[13.5px] text-stone">
-          이미 다른 담당자가 있어 대기자로 등록된 현장입니다. 담당자의 포인트가 소진되면 순서대로 인계됩니다.
+          이미 다른 담당자가 있어 대기자로 등록된 현장입니다. 담당자의 노출 기간이 끝나면 순서가 안내됩니다.
         </p>
       </div>
 

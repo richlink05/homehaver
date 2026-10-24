@@ -110,6 +110,7 @@ export interface Database {
           registrant_id: string | null;
           tenure_start: string | null;
           last_deduction_date: string | null;
+          exposure_ends_at: string | null;
           move_in_date: string | null;
           address: string | null;
           lat: number | null;
@@ -146,6 +147,7 @@ export interface Database {
           registrant_id?: string | null;
           tenure_start?: string | null;
           last_deduction_date?: string | null;
+          exposure_ends_at?: string | null;
           move_in_date?: string | null;
           address?: string | null;
           lat?: number | null;
@@ -180,6 +182,7 @@ export interface Database {
           registrant_id?: string | null;
           tenure_start?: string | null;
           last_deduction_date?: string | null;
+          exposure_ends_at?: string | null;
           move_in_date?: string | null;
           address?: string | null;
           lat?: number | null;
@@ -607,8 +610,9 @@ export interface Database {
           requester_id: string | null;
           work_agreement_path: string;
           business_card_path: string;
-          status: "대기" | "승인" | "반려";
+          status: "대기" | "승인" | "반려" | "결제만료";
           rejection_reason: string | null;
+          days: number;
           created_at: string;
         };
         Insert: {
@@ -617,8 +621,9 @@ export interface Database {
           requester_id?: string | null;
           work_agreement_path: string;
           business_card_path: string;
-          status?: "대기" | "승인" | "반려";
+          status?: "대기" | "승인" | "반려" | "결제만료";
           rejection_reason?: string | null;
+          days?: number;
           created_at?: string;
         };
         Update: {
@@ -627,11 +632,51 @@ export interface Database {
           requester_id?: string | null;
           work_agreement_path?: string;
           business_card_path?: string;
-          status?: "대기" | "승인" | "반려";
+          status?: "대기" | "승인" | "반려" | "결제만료";
           rejection_reason?: string | null;
+          days?: number;
           created_at?: string;
         };
         Relationships: [];
+      };
+      exposure_orders: {
+        Row: {
+          id: string;
+          listing_id: string | null;
+          user_id: string | null;
+          request_id: string | null;
+          kind: "new" | "extend";
+          days: number;
+          amount: number;
+          status: "결제대기" | "결제완료" | "결제만료" | "종료" | "환불";
+          pay_deadline: string | null;
+          paid_at: string | null;
+          starts_at: string | null;
+          ends_at: string | null;
+          payment_key: string | null;
+          refunded_days: number;
+          refund_amount: number;
+          refund_status: "환불대기" | "환불완료" | null;
+          refunded_at: string | null;
+          created_at: string;
+        };
+        // 주문은 DB 함수(claim_listing 등)로만 만들고 바꿉니다. 클라이언트에서 직접 insert/update하지 않습니다.
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [
+          {
+            foreignKeyName: "exposure_orders_listing_id_fkey";
+            columns: ["listing_id"];
+            referencedRelation: "listings";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "exposure_orders_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
     Views: {
@@ -642,12 +687,28 @@ export interface Database {
         Args: { listing_id: string };
         Returns: void;
       };
-      add_points: {
-        Args: { p_amount: number; p_type: string; p_note: string };
-        Returns: number;
+      claim_listing: {
+        Args: { p_listing_id: string; p_days: number };
+        Returns: string;
       };
-      activate_manager: {
-        Args: { p_listing_id: string };
+      request_extension: {
+        Args: { p_listing_id: string; p_days: number };
+        Returns: string;
+      };
+      confirm_exposure_payment: {
+        Args: { p_order_id: string; p_payment_key?: string | null };
+        Returns: void;
+      };
+      mark_refund_done: {
+        Args: { p_order_id: string };
+        Returns: void;
+      };
+      process_exposure_lifecycle: {
+        Args: Record<PropertyKey, never>;
+        Returns: void;
+      };
+      tick_exposure_lifecycle: {
+        Args: Record<PropertyKey, never>;
         Returns: void;
       };
       join_waitlist: {
@@ -656,11 +717,7 @@ export interface Database {
       };
       stop_managing: {
         Args: { p_listing_id: string };
-        Returns: void;
-      };
-      process_daily_deductions: {
-        Args: Record<PropertyKey, never>;
-        Returns: void;
+        Returns: number;
       };
       create_post: {
         Args: {

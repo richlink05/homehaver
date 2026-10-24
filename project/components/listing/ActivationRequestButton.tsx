@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { DaysPicker } from "@/components/exposure/DaysPicker";
+import { exposurePrice, formatWon } from "@/lib/exposure";
 
 export function ActivationRequestButton({
   listingId,
@@ -20,6 +22,7 @@ export function ActivationRequestButton({
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [myRank, setMyRank] = useState<number | null>(null);
+  const [days, setDays] = useState(1);
 
   const submit = async () => {
     setError("");
@@ -57,6 +60,7 @@ export function ActivationRequestButton({
           requester_id: user.id,
           work_agreement_path: workAgreementPath,
           business_card_path: businessCardPath,
+          days,
         })
         .select("id")
         .single();
@@ -99,7 +103,9 @@ export function ActivationRequestButton({
                   </p>
                 )}
                 <p className="mb-6 text-[12.5px] text-stone">
-                  관리자 검토 후 승인되면 "{listingTitle}" 현장의 담당자로 활성화되고 포인트가 차감됩니다.
+                  관리자가 서류를 확인하면 "{listingTitle}" 현장의 결제 순번이 됩니다. 내 차례가 되면 24시간 안에
+                  결제({formatWon(exposurePrice(days))}, {days}일)하셔야 노출되며, 결제하지 않으면 다음 순번으로
+                  넘어갑니다. 진행 상황은 마이페이지 &gt; 담당자 신청내역에서 확인하세요.
                 </p>
                 <button
                   onClick={() => setOpen(false)}
@@ -112,8 +118,8 @@ export function ActivationRequestButton({
               <>
                 <h3 className="mb-1.5 text-[15px] font-semibold">담당자 신청</h3>
                 <p className="mb-5 text-[12.5px] text-stone">
-                  1인 1현장 원칙에 따라, 실제 근무자인지 확인하기 위한 서류를 제출해주세요. 관리자 승인 후
-                  15,000P가 차감되며 담당자로 활성화됩니다.
+                  1인 1현장 원칙에 따라, 실제 근무자인지 확인하기 위한 서류를 제출해주세요. 서류 승인 후 내 차례가
+                  되면 24시간 안에 결제하셔야 노출됩니다.
                 </p>
 
                 <div className="mb-4">
@@ -133,6 +139,11 @@ export function ActivationRequestButton({
                     onChange={(e) => setBusinessCardFile(e.target.files?.[0] ?? null)}
                     className="w-full text-[13px]"
                   />
+                </div>
+
+                <div className="mb-5">
+                  <label className="mb-1.5 block text-[12.5px] text-gray-600">노출 기간 (하루 20,000원)</label>
+                  <DaysPicker value={days} onChange={setDays} />
                 </div>
 
                 {error && <p className="mb-3 text-[12.5px] text-red-500">{error}</p>}

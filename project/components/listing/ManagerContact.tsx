@@ -1,6 +1,6 @@
 "use client";
 
-import { ListingStatusActions } from "@/components/listing/ListingStatusActions";
+import { ExposureActionButton } from "@/components/exposure/ExposureActionButton";
 import { ActivationRequestButton } from "@/components/listing/ActivationRequestButton";
 
 const HQ_PHONE = "1544-0892";
@@ -57,8 +57,8 @@ export function ManagerContact({
             (1인 1현장 원칙)
           </p>
         ) : isRegistrant ? (
-          // 본인이 등록한 현장은 등록 시 이미 서류를 제출·검토받았으므로 바로 활성화합니다.
-          <ListingStatusActions listingId={listingId} action="activate" />
+          // 본인이 등록한 현장은 등록 시 이미 서류를 제출·검토받았으므로, 노출 기간을 골라 바로 선점(24시간 내 결제)합니다.
+          <ExposureActionButton listingId={listingId} mode="claim" />
         ) : (
           // 본인이 등록하지 않은(주인없는) 현장은 서류 제출 후 관리자 승인을 거쳐야 합니다.
           <ActivationRequestButton listingId={listingId} listingTitle={listingTitle} />

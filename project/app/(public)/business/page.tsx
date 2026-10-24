@@ -39,11 +39,11 @@ const FAQS = [
   },
   {
     q: "이미 다른 담당자가 있는 현장도 등록할 수 있나요?",
-    a: "네, 현장 정보 자체는 등록할 수 있습니다. 다만 노출은 한 번에 한 담당자에게만 가능해, 기존 담당자가 있다면 대기자로 등록되어 순서를 기다리게 됩니다.",
+    a: "네, 현장 정보 자체는 등록할 수 있습니다. 다만 노출은 한 번에 한 담당자에게만 가능해, 기존 담당자가 있다면 담당자 신청(서류 제출)을 하고 순서를 기다리게 됩니다. 내 차례가 되면 24시간 안에 결제해야 노출됩니다.",
   },
   {
-    q: "포인트는 어떻게 충전하나요?",
-    a: "마이페이지 > 포인트관리에서 충전할 수 있습니다. 최소 충전금액은 30,000원입니다.",
+    q: "결제는 어떻게 하나요? 환불은 되나요?",
+    a: "충전 없이, 노출할 기간(1·3·7·10일)을 골라 그 기간만 결제합니다. 노출은 매일 오전 6시에 시작·종료되며, 중간에 중단하시면 남은 일수만큼 환불해 드립니다.",
   },
   {
     q: "승인은 얼마나 걸리나요?",
@@ -176,24 +176,24 @@ export default function BusinessPage() {
           <p className="mb-3 text-xs font-bold tracking-[2px] text-gold-deep">PRICING</p>
           <h2 className="text-[28px] font-bold">이용 요금 안내</h2>
           <p className="mt-3 text-[14.5px] text-stone">
-            광고비가 아니라, 노출된 일수만큼만 부담하는 포인트 방식입니다.
+            노출할 기간(1·3·7·10일)을 직접 골라 그 기간만 결제하는 방식입니다. 충전금이 남을 일이 없습니다.
           </p>
         </div>
         <div className="mx-auto max-w-[640px] overflow-hidden rounded-lg border border-line">
           <div className="bg-ink px-8 py-8 text-center text-white">
             <p className="font-serif text-[38px] font-bold text-gold-soft">
-              15,000P <span className="text-[15px] font-normal text-gray-300">/ 일</span>
+              20,000원 <span className="text-[15px] font-normal text-gray-300">/ 일</span>
             </p>
             <p className="mt-1.5 text-[12.5px] text-gray-300">
-              노출 중인 현장 1건 기준, 하루 단위로 자동 차감됩니다
+              노출 중인 현장 1건 기준, 선택한 일수만큼만 결제합니다
             </p>
           </div>
           <ul className="px-8 py-7">
             {[
-              "1P = 1원, 최소 충전금액 30,000원",
-              "포인트가 있는 동안에만 노출되며, 소진 시 대기자에게 자동 인계",
-              '담당 현장은 언제든지 "광고 그만하기"로 중단 가능',
-              "이미 담당자가 있는 현장은 대기자로 등록해 순서를 기다릴 수 있음",
+              "1일 · 3일 · 7일 · 10일 중 선택 (하루 20,000원)",
+              "현장 선점 후 24시간 안에 결제하면 노출되고, 미결제 시 다음 순번으로 넘어감",
+              "노출은 매일 오전 6시에 시작·종료되며, 종료 전 알림을 받고 연장할 수 있음",
+              "중도 중단 시 남은 일수만큼 환불, 이미 담당자가 있는 현장은 순번을 기다릴 수 있음",
             ].map((text) => (
               <li
                 key={text}

@@ -16,7 +16,7 @@ const NAV_ITEMS_AGENCY = [
   { label: "즐겨찾기", href: "/mypage/favorites" },
   { label: "담당자 신청내역", href: "/listings/activation-requests" },
   { label: "상담문의", href: "/inquiries" },
-  { label: "포인트관리", href: "/mypage/points" },
+  { label: "결제내역", href: "/mypage/payments" },
   { label: "공지사항", href: "/mypage/notices" },
   { label: "프로필 설정", href: "/mypage/profile" },
 ];

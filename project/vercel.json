@@ -2,8 +2,8 @@
   "regions": ["icn1"],
   "crons": [
     {
-      "path": "/api/cron/deductions",
-      "schedule": "0 13 * * *"
+      "path": "/api/cron/exposure",
+      "schedule": "0 21 * * *"
     }
   ]
 }

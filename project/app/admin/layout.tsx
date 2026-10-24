@@ -12,7 +12,7 @@ const NAV = [
   { href: "/admin/ad-status", label: "광고내역" },
   { href: "/admin/users", label: "회원관리" },
   { href: "/admin/inquiries", label: "상담문의" },
-  { href: "/admin/points", label: "포인트관리" },
+  { href: "/admin/payments", label: "결제관리" },
   { href: "/admin/search-stats", label: "검색어 통계" },
   { href: "/admin/stats", label: "일별통계" },
   { href: "/admin/banners", label: "배너관리" },

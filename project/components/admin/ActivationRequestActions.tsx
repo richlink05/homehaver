@@ -18,7 +18,7 @@ export function ActivationRequestActions({
   const resolve = async (action: "승인" | "반려") => {
     const confirmMsg =
       action === "승인"
-        ? "승인하면 신청자가 이 현장의 담당자로 즉시 활성화되고 15,000P가 차감됩니다. 진행하시겠습니까?"
+        ? "서류를 승인하면 신청자가 이 현장의 결제 순번이 됩니다. 현장이 비어 있으면 바로 24시간 결제 기회가 시작되고, 결제가 확인되면 노출됩니다. 진행하시겠습니까?"
         : "이 신청을 반려하시겠습니까?";
     if (!confirm(confirmMsg)) return;
 

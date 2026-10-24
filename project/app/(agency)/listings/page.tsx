@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ListingStatusActions } from "@/components/listing/ListingStatusActions";
+import { ExposureActionButton } from "@/components/exposure/ExposureActionButton";
 import { MypageShell } from "@/components/mypage/MypageShell";
 
 export const dynamic = "force-dynamic";
@@ -120,7 +120,7 @@ export default async function MyListingsPage() {
                     {new Date(l.created_at).toLocaleDateString("ko-KR")}
                   </td>
                   <td className="px-5 py-3.5 text-right">
-                    {l.is_approved && !l.agency_id && <ListingStatusActions listingId={l.id} action="activate" />}
+                    {l.is_approved && !l.agency_id && <ExposureActionButton listingId={l.id} mode="claim" />}
                   </td>
                 </tr>
               );

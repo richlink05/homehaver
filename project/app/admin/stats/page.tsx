@@ -22,12 +22,9 @@ export default async function AdminStatsPage() {
 
   const { count: listingCount } = await supabase.from("listings").select("id", { count: "exact", head: true });
 
-  const { data: chargeRows } = await supabase
-    .from("point_transactions")
-    .select("amount")
-    .eq("type", "충전")
-    .returns<{ amount: number }[]>();
-  const totalCharged = (chargeRows ?? []).reduce((sum, r) => sum + r.amount, 0);
+  const paidRes = await supabase.from("exposure_orders").select("amount, refund_amount").not("paid_at", "is", null);
+  const paidRows = (paidRes.data ?? []) as { amount: number; refund_amount: number }[];
+  const totalCharged = paidRows.reduce((sum, r) => sum + r.amount - r.refund_amount, 0);
 
   const chartData = [...(visitRows ?? [])].reverse();
   const maxCount = Math.max(1, ...chartData.map((d) => d.count));
@@ -50,7 +47,7 @@ export default async function AdminStatsPage() {
           <p className="font-serif text-[24px] font-semibold">{(listingCount ?? 0).toLocaleString("ko-KR")}건</p>
         </div>
         <div className="rounded-lg border border-line bg-white p-5">
-          <p className="mb-1.5 text-[12px] text-stone">누적 충전금액</p>
+          <p className="mb-1.5 text-[12px] text-stone">누적 결제금액(환불 제외)</p>
           <p className="font-serif text-[24px] font-semibold">{totalCharged.toLocaleString("ko-KR")}원</p>
         </div>
       </div>

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function ActivationRequestsPage({
   searchParams,
 }: {
-  searchParams: { filter?: "대기" | "승인" | "반려" };
+  searchParams: { filter?: "대기" | "승인" | "반려" | "결제만료" };
 }) {
   const supabase = createClient();
   const filter = searchParams.filter ?? "대기";
@@ -19,7 +19,7 @@ export default async function ActivationRequestsPage({
     requester_id: string | null;
     work_agreement_path: string;
     business_card_path: string;
-    status: "대기" | "승인" | "반려";
+    status: "대기" | "승인" | "반려" | "결제만료";
     rejection_reason: string | null;
     created_at: string;
   };
@@ -64,11 +64,11 @@ export default async function ActivationRequestsPage({
     <div>
       <AdminPageHeader
         title="담당자 신청"
-        description="주인없는 현장에 새로 담당자로 신청한 건을 서류 확인 후 승인/반려합니다."
+        description="주인없는 현장에 새로 담당자로 신청한 건의 서류를 확인해 승인/반려합니다. 승인된 신청은 순번대로 24시간 안에 결제하고, 결제하지 않으면 다음 순번으로 넘어갑니다."
       />
 
       <div className="mb-5 flex gap-2">
-        {(["대기", "승인", "반려"] as const).map((s) => (
+        {(["대기", "승인", "반려", "결제만료"] as const).map((s) => (
           <a
             key={s}
             href={`/admin/activation-requests?filter=${s}`}
@@ -102,7 +102,7 @@ export default async function ActivationRequestsPage({
                     className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                       r.status === "대기"
                         ? "border border-line text-gray-500"
-                        : r.status === "반려"
+                        : r.status === "반려" || r.status === "결제만료"
                         ? "bg-mist text-gray-500"
                         : "bg-gold/15 text-gold-deep"
                     }`}

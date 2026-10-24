@@ -52,6 +52,20 @@ export async function middleware(request: NextRequest) {
     });
   }
 
+  // 노출 기간 처리(결제기한 만료 / 오전 6시 노출 시작·종료 / 다음 순번 안내)를 보조로 실행합니다.
+  // Vercel 무료 플랜의 크론은 하루 1번이라 정각 처리가 늦어질 수 있어, 방문자가 있을 때 함께 돌립니다.
+  // 방문자당 5분에 한 번만 호출하고, DB 함수 안에서도 1분에 한 번만 실제로 실행되도록 제한합니다.
+  if (!pathname.startsWith("/api") && !request.cookies.get("exposure_tick")) {
+    // ⚠️ rpc() 인자 타입 추론 문제 우회 (increment_view_count와 동일한 이유)
+    await (supabase.rpc as any)("tick_exposure_lifecycle");
+    response.cookies.set({
+      name: "exposure_tick",
+      value: "1",
+      path: "/",
+      maxAge: 60 * 5,
+    });
+  }
+
   return response;
 }
 

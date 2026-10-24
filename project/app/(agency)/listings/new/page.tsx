@@ -121,19 +121,6 @@ export default function NewListingPage() {
       return;
     }
 
-    // 신규 등록은 최소 15,000P 이상 보유한 경우에만 가능합니다 (승인 후 담당자로 활성화할 때 필요).
-    const { data: myProfile } = await supabase
-      .from("profiles")
-      .select("points")
-      .eq("id", user.id)
-      .single<{ points: number }>();
-    if ((myProfile?.points ?? 0) < 15000) {
-      setSubmitError(
-        `분양등록은 최소 15,000P 이상 보유하신 경우에만 가능합니다. (현재 보유: ${(myProfile?.points ?? 0).toLocaleString("ko-KR")}P) 마이페이지 > 포인트관리에서 충전 후 다시 시도해주세요.`
-      );
-      return;
-    }
-
     // 근무이행각서 / 명함을 비공개 버킷에 업로드합니다 (경로 맨 앞에 본인 uid를 붙여 접근권한 정책과 맞춥니다).
     const uploadDoc = async (file: File, label: string) => {
       const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
