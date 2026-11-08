@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getProfileRole } from "@/lib/supabase/get-profile";
+import { geocodeAddress } from "@/lib/geocode";
 
 export async function POST() {
   const supabase = createClient();
@@ -33,21 +34,16 @@ export async function POST() {
 
   for (const listing of targets) {
     try {
-      const res = await fetch(
-        `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(listing.address)}`,
-        { headers: { Authorization: `KakaoAK ${apiKey}` } }
-      );
-      const data = await res.json();
-      const doc = data.documents?.[0];
+      const geo = await geocodeAddress(listing.address, apiKey);
 
-      if (!doc) {
+      if (!geo) {
         failed.push(`${listing.address} (좌표 못 찾음)`);
         continue;
       }
 
       // ⚠️ update() 입력값 타입 추론 문제 우회 (다른 insert/update 호출과 동일한 이유)
       const { error } = await (supabase.from("listings") as any)
-        .update({ lat: parseFloat(doc.y), lng: parseFloat(doc.x) })
+        .update({ lat: geo.lat, lng: geo.lng })
         .eq("id", listing.id);
 
       if (error) {

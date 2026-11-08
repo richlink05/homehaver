@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { geocodeAddress } from "@/lib/geocode";
 import { crawlerBatchSchema, type CrawlerListingInput } from "@/lib/validators/crawler-listing.schema";
 
 // 파이썬 크롤러 전용 매물 등록 API입니다.
@@ -74,8 +75,9 @@ async function insertOneListing(supabase: ReturnType<typeof createServiceClient>
   //    (사람이 등록할 때와 동일한 정책 — 좌표는 나중에 관리자가 일괄 보정 가능).
   let lat = item.lat ?? null;
   let lng = item.lng ?? null;
-  if ((lat == null || lng == null) && item.address) {
-    const geo = await geocodeAddress(item.address);
+  const kakaoKey = process.env.KAKAO_REST_API_KEY;
+  if ((lat == null || lng == null) && item.address && kakaoKey) {
+    const geo = await geocodeAddress(item.address, kakaoKey);
     if (geo) {
       lat = geo.lat;
       lng = geo.lng;
@@ -136,22 +138,4 @@ async function insertOneListing(supabase: ReturnType<typeof createServiceClient>
   }
 
   return listing.id as string;
-}
-
-async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
-  const apiKey = process.env.KAKAO_REST_API_KEY;
-  if (!apiKey) return null;
-
-  try {
-    const res = await fetch(`https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(address)}`, {
-      headers: { Authorization: `KakaoAK ${apiKey}` },
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const doc = data.documents?.[0];
-    if (!doc) return null;
-    return { lat: parseFloat(doc.y), lng: parseFloat(doc.x) };
-  } catch {
-    return null;
-  }
 }
